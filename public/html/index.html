@@ -1,0 +1,692 @@
+<head>
+    <title>(WORKING TITLE) VisualBlocks</title>
+
+    <script src="../javascript/nodeManager.js"></script>
+
+    <!-- default nodes -->
+    <!-- these essentially act as wrappers for javascript -->
+    <!-- they're a little different in some cases, though -->
+    <script src="../javascript/nodes/math.js" defer></script>
+    <script src="../javascript/nodes/number.js" defer></script>
+    <script src="../javascript/nodes/viewer.js" defer></script>
+
+    <style>
+        canvas {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <button onclick="addnode()">Add Node</button>
+
+    <canvas id="main">
+
+    </canvas>
+</body>
+
+<script>
+    var fast_mode = false
+    var Mouse = {
+        position: {
+            x: 0,
+            y: 0
+        },
+        buttons: {
+            0: false,
+            1: false
+        },
+        dragging: false
+    }
+
+    var positions = {},
+        scales = {}
+
+    var startX = 25,
+        startY = 25
+
+    function addnode() {
+        // var d = document.getElementById("nodes")
+        // d.innerHTML = ""
+        var list = [CreateMathNode, CreateNumberNode, CreateViewerNode]
+
+        const new_node = list[Math.floor(Math.random() * list.length)]()
+        new_node.position = {
+            x: startX,
+            y: startY
+        }
+
+        UpdateAndDrawNodes()
+
+        startY += 125
+        if (startY > canvas.height - 125)
+            startY = 25, startX += 175
+    }
+
+
+    var canvas = document.getElementById("main")
+    var ctx = canvas.getContext("2d")
+
+    function InitCanvas() {
+        // resize to be slightly smaller than the screen
+        var c = document.getElementById("main")
+        c.height = Math.round(window.innerHeight * 0.65)
+        c.width = Math.round(window.innerWidth - 10)
+
+        UpdateAndDrawNodes()
+    }
+
+    function ClearCanvas() {
+        const oldFill = ctx.fillStyle
+
+        ctx.fillStyle = "#394152"
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        ctx.fillStyle = oldFill
+    }
+
+    // draw nodes
+
+    // OPTIMIZATIONS TO DO
+    // only redraw moving nodes
+    // clear area around node, redrawing any nearby nodes if they are inside of the area
+    function DrawNode(node) {
+        // get node position eventually
+        var position = node.position
+        var scale = {
+            x: 150,
+            y: 25
+        }
+
+        // each node input/output should be approx 15px tall
+        scale.y += (Math.max(Object.keys(node.inputs).length, Object.keys(node.outputs).length) * 25)
+
+        // draw shadow
+        ctx.fillStyle = "rgba(0.5,0.5,0.5,0.15)"
+        ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+        roundRect(ctx, position.x + 5, position.y + 5, scale.x, scale.y, 5, true, false)
+
+        // draw outside w/ accent
+        var acc = HexToRGB(node.accent)
+        var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, 0.5)`
+        ctx.fillStyle = rgba_accent
+        ctx.strokeStyle = rgba_accent
+        // ctx.fillStyle = "#" + node.accent
+        // ctx.strokeStyle = "#" + node.accent
+        roundRect(ctx, position.x, position.y, scale.x, scale.y, 5, true, false)
+
+        const accentWidth = 5
+        ctx.fillStyle = "rgba(1,1,1,0.5)"
+        ctx.strokeStyle = "rgba(1,1,1,0.5)"
+        roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
+
+        ctx.textAlign = "left"
+        ctx.font = "bold 10px Arial"
+        ctx.fillStyle = "white"
+        ctx.strokeStyle = "white"
+        ctx.fillText(node.GetName(), position.x + 10, (position.y + scale.y) - 5)
+
+        ctx.font = "bold 12px Arial"
+        var nHeight = 20
+        // draw inputs/outputs
+        Object.keys(node.inputs).forEach(input => {
+
+            if (node.inputs[input].type != "Selection") {
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "white"
+                ctx.fillText(input, position.x + 10, position.y + nHeight)
+
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "black"
+                circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
+            } else {
+                // draw the selection box
+                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
+                ctx.strokeStyle = "white"
+                roundRect(ctx, position.x + 10, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
+
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "white"
+                ctx.fillText(node.inputs[input].currentView.name, position.x + 14, position.y + nHeight)
+                // roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
+            }
+
+            nHeight += 25
+        })
+
+        nHeight = 20
+
+        ctx.textAlign = "right"
+        // for (var output in node.outputs) {
+
+        // }
+        Object.keys(node.outputs).forEach(o => {
+            var output = node.outputs[o]
+            if (output.type == "Viewer") {
+                // if the output type is a Viewer, eg Number Viewer
+                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
+                ctx.strokeStyle = "white"
+
+                roundRect(ctx, position.x + scale.x - 70, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
+
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "white"
+                ctx.textAlign = "left"
+                ctx.fillText(node.inputs["Input"].value, position.x + scale.x - 66, position.y + nHeight)
+            } else {
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "white"
+                ctx.fillText(o, position.x + scale.x - 10, position.y + nHeight)
+
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "black"
+                circle(ctx, position.x + scale.x, (position.y + nHeight) - 4, 5, true, true)
+            }
+
+            nHeight += 25
+        })
+
+        node.scale = scale
+    }
+
+    function DrawNodeConnections() {
+        NodeManager.GetNodes().forEach(node => {
+            // draw this output's connections
+            Object.keys(node.outputs).forEach(output => {
+                if (node.outputs[output].hasOwnProperty("connections"))
+                    node.outputs[output].connections.forEach(con => {
+                        DrawConnection(node.outputs[output].position, con.position)
+                    })
+            })
+        })
+    }
+
+    // function rectangle(ctx, x, y, width, height, fill) {
+
+    // }
+
+    function circle(ctx, x, y, radius, fill, stroke) {
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, 2 * Math.PI)
+        // ctx.stroke()
+
+        if (fill)
+            ctx.fill()
+        if (stroke)
+            ctx.stroke()
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        if (typeof stroke === 'undefined')
+            stroke = true
+        if (typeof radius === 'undefined')
+            radius = 5
+        if (typeof radius === 'number')
+            radius = { tl: radius, tr: radius, br: radius, bl: radius }
+        else {
+            var defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 }
+            for (var side in defaultRadius)
+                radius[side] = radius[side] || defaultRadius[side]
+
+        }
+
+        ctx.beginPath()
+        ctx.moveTo(x + radius.tl, y)
+        ctx.lineTo(x + width - radius.tr, y)
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr)
+        ctx.lineTo(x + width, y + height - radius.br)
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height)
+        ctx.lineTo(x + radius.bl, y + height)
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl)
+        ctx.lineTo(x, y + radius.tl)
+        ctx.quadraticCurveTo(x, y, x + radius.tl, y)
+        ctx.closePath()
+        if (fill)
+            ctx.fill()
+
+        if (stroke)
+            ctx.stroke()
+
+    }
+
+    function DrawConnection(source, dest, shadow) {
+        ctx.strokeStyle = "white"
+        ctx.beginPath()
+        ctx.moveTo(source.x, source.y)
+
+        if (fast_mode) {
+            ctx.lineTo(dest.x, dest.y)
+            ctx.stroke()
+        } else {
+
+            var mid = {
+                x: (source.x + dest.x) / 2,
+                y: (source.y + dest.y) / 2
+            }
+
+            var c_point1 = {
+                x: (mid.x + source.x) / 2,
+                y: source.y
+            }
+
+            var c_point2 = {
+                x: (mid.x + dest.x) / 2,
+                y: dest.y
+            }
+
+            ctx.bezierCurveTo(source.x, source.y, c_point1.x, c_point1.y, mid.x, mid.y)
+            ctx.bezierCurveTo(mid.x, mid.y, c_point2.x, c_point2.y, dest.x, dest.y)
+            ctx.stroke()
+
+            if (shadow) {
+                ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+                ctx.beginPath()
+                ctx.moveTo(source.x + 5, source.y + 5)
+                ctx.bezierCurveTo(source.x + 5, source.y + 5, c_point1.x + 5, c_point1.y + 5, mid.x + 5, mid.y + 5)
+                ctx.bezierCurveTo(mid.x + 5, mid.y + 5, c_point2.x + 5, c_point2.y + 5, dest.x + 5, dest.y + 5)
+                ctx.stroke()
+            }
+        }
+
+
+    }
+
+    var mouse_previous = {},
+        lastCheck = Date.now()
+
+    var making_connection = false,
+        con1, con2
+
+    canvas.addEventListener('mousemove', (e) => {
+        var rect = canvas.getBoundingClientRect()
+
+        Mouse.position = {
+            x: (e.clientX - rect.left) * (canvas.width / rect.width),
+            y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        }
+
+        Mouse.velocity = {
+            x: Mouse.position.x - mouse_previous.x,
+            y: Mouse.position.y - mouse_previous.y
+        }
+
+        mouse_previous = {
+            x: (e.clientX - rect.left) * (canvas.width / rect.width),
+            y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        }
+
+        // console.log(Mouse.velocity)
+
+        // check if mouse is within a node if not dragging
+        if (!Mouse.dragging)
+            NodeManager.GetNodes().every(node => {
+                const pos = node.position,
+                    scale = node.scale
+
+                var bounds = {
+                    x: {
+                        min: pos.x - 5,
+                        max: pos.x + scale.x + 5
+                    },
+                    y: {
+                        min: pos.y,
+                        max: pos.y + scale.y
+                    }
+                }
+
+                // default select node
+                var t = CheckPointInNode(node, Mouse.position)
+
+                if (t) {
+                    Mouse.target = t
+                    canvas.style.cursor = Mouse.target.type == "Node" ? "grab" : "pointer"
+                    return false
+                } else {
+                    Mouse.target = undefined
+                    canvas.style.cursor = "auto"
+                }
+
+                return true
+            })
+
+        if (Mouse.target && Mouse.dragging) {
+            // dragging something
+
+            if (Mouse.target.type == "Node") {
+                // if the target is a node, we're trying to move it!
+                Mouse.target.BringToFront()
+                canvas.style.cursor = "grabbing"
+                var p = Mouse.target.position
+
+                if (typeof dragOffset == "undefined") {
+                    dragOffset = {
+                        x: Mouse.position.x - p.x,
+                        y: Mouse.position.y - p.y
+                    }
+                    console.log(dragOffset)
+                }
+
+                Mouse.target.position = {
+                    x: Mouse.position.x - dragOffset.x,
+                    y: Mouse.position.y - dragOffset.y
+                }
+
+                UpdateNodePositions(Mouse.target)
+
+                // DrawNode(Mouse.target)
+
+                UpdateAndDrawNodes()
+            } else if (Mouse.target.type != "Selection") {
+                // if the target is not a selection, EG any input/output
+                canvas.style.cursor = "crosshair"
+
+                ClearCanvas()
+                var endpoint = Mouse.position
+
+                NodeManager.GetNodes().forEach(node => {
+                    var t = CheckPointInNode(node, Mouse.position)
+
+                    // making_connection = false
+
+                    // console.log(t, Mouse.target)
+
+                    if (typeof t != "undefined" && t.type != "Node" && t.type != "Selection" && t.direction != Mouse.target.direction && t.parent != Mouse.target.parent && t.type == Mouse.target.type) {
+                        endpoint = t.position
+                        con1 = Mouse.target
+                        con2 = t
+                        making_connection = true
+                    }
+
+                    if (endpoint == Mouse.position) making_connection = false
+                })
+
+                UpdateAndDrawNodes()
+
+                DrawConnection(Mouse.target.position, endpoint, true)
+
+                // only draw point if following the mouse
+                if (endpoint == Mouse.position) {
+                    ctx.fillStyle = "rgba(0.5,0.5,0.5,0.15)"
+                    ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+                    circle(ctx, endpoint.x + 5, endpoint.y + 5, 5, true, true)
+
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "black"
+                    circle(ctx, endpoint.x, endpoint.y, 5, true, false)
+                }
+            }
+        }
+
+        if (Mouse.buttons[e.button]) Mouse.dragging = true
+    }, false)
+
+    function CheckPointInNode(node, point) {
+        const pos = node.position,
+            scale = node.scale
+
+        var bounds = {
+            x: {
+                min: pos.x - 5,
+                max: pos.x + scale.x + 5
+            },
+            y: {
+                min: pos.y,
+                max: pos.y + scale.y
+            }
+        }
+
+        var target = undefined
+        if (point.x >= bounds.x.min && point.x <= bounds.x.max && point.y >= bounds.y.min && point.y <= bounds.y.max) {
+            target = node
+            // WITHIN THIS NODE!
+
+            const inputs = node.inputs,
+                outputs = node.outputs
+
+            // check each input/output circle
+            Object.keys(inputs).every((k, i) => {
+                // calc y level
+                var y = pos.y + (20 + (i * 25)) - 4
+
+                inputs[k].position = {
+                    x: bounds.x.min + 5,
+                    y: y
+                }
+
+                if (inputs[k].type != "Selection") {
+
+                    // console.log(y)
+                    if (point.x >= bounds.x.min && point.x <= bounds.x.min + 10) {
+                        if (point.y >= y - 5 && point.y <= y + 5) {
+                            // inputs[k].position = {
+                            //     x: bounds.x.min + 5,
+                            //     y: y
+                            // }
+                            target = inputs[k]
+                            return false
+                        }
+                    }
+                } else if (inputs[k].type == "Selection") {
+                    // roundRect(ctx, position.x + 10, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
+                    var y = pos.y + (20 + (i * 25)) - 5
+                    // console.log(y)
+                    if (point.x >= pos.x + 10 && point.x <= pos.x + scale.x / 2 - 10 + 10) {
+                        if (point.y >= y - 6 && point.y <= y + 6) {
+                            target = inputs[k]
+                            return false
+                        }
+                    }
+                }
+
+                return true
+            })
+
+            Object.keys(outputs).every((k, i) => {
+                // calc y level
+                var y = pos.y + (20 + (i * 25)) - 4
+                // console.log(y)
+                if (point.x >= bounds.x.max - 10 && point.x <= bounds.x.max) {
+                    if (point.y >= y - 5 && point.y <= y + 5) {
+                        outputs[k].position = {
+                            x: bounds.x.max - 5,
+                            y: y
+                        }
+                        target = outputs[k]
+                        return false
+                    }
+                }
+
+                return true
+            })
+        }
+
+        return target
+    }
+
+    function UpdateNodePositions(node) {
+        const pos = node.position,
+            scale = node.scale
+
+        const inputs = node.inputs,
+            outputs = node.outputs
+
+        var bounds = {
+            x: {
+                min: pos.x - 5,
+                max: pos.x + scale.x + 5
+            },
+            y: {
+                min: pos.y,
+                max: pos.y + scale.y
+            }
+        }
+
+        Object.keys(inputs).forEach((k, i) => {
+            if (inputs[k].type != "Selection") {
+
+                var y = pos.y + (20 + (i * 25)) - 4
+
+                inputs[k].position = {
+                    x: bounds.x.min + 5,
+                    y: y
+                }
+            }
+
+            return true
+        })
+
+        Object.keys(outputs).forEach((k, i) => {
+
+            var y = pos.y + (20 + (i * 25)) - 4
+
+            outputs[k].position = {
+                x: bounds.x.max - 5,
+                y: y
+            }
+        })
+    }
+
+    function UpdateAndDrawNodes() {
+        ClearCanvas()
+
+        DrawNodeConnections()
+
+        // NodeManager.GetNodes().forEach(node => {
+        //     DrawNode(node)
+        // })
+        var nodes = NodeManager.GetNodes()
+        for (var i = nodes.length - 1; i >= 0; --i) {
+            DrawNode(nodes[i])
+        }
+
+    }
+
+    function HexToRGB(hex) {
+        var r = parseInt(hex.substr(0, 2), 16),
+            g = parseInt(hex.substr(2, 2), 16),
+            b = parseInt(hex.substr(4, 2), 16)
+
+        return {
+            r: r,
+            g: g,
+            b: b
+        }
+    }
+
+    var dragOffset = undefined
+
+    canvas.addEventListener('mousedown', (e) => {
+        Mouse.buttons[e.button] = true
+
+        e.preventDefault()
+        e.stopPropagation()
+    })
+
+    canvas.addEventListener('mouseup', (e) => {
+        Mouse.buttons[e.button] = false
+
+        var no_update = false
+
+        if (typeof Mouse.target != "undefined") {
+            if (Mouse.target.type == "Node") {
+                var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
+                if (magnitude == 0) Mouse.target.position.velocity = {
+                    x: 0,
+                    y: 0,
+                    magnitude: 0
+                }
+                else Mouse.target.position.velocity = {
+                    x: Mouse.velocity.x / magnitude,
+                    y: Mouse.velocity.y / magnitude,
+                    magnitude: magnitude
+                }
+            } else if (Mouse.target.type == "Selection") {
+                canvas.style.cursor = "auto"
+                UpdateAndDrawNodes()
+                no_update = true
+
+                // open the selection dropdown
+                console.log(Mouse.target)
+                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
+                ctx.strokeStyle = "white"
+                var calc_height = (Mouse.target.views.length) * 15 + 5
+                var height = Math.max(15, calc_height)
+                if (height > 155) height = 155
+                console.log("HEIGHT", height)
+                roundRect(ctx, Mouse.target.position.x + 10, Mouse.target.position.y + 6, Mouse.target.parent.scale.x * 0.75, height, 5, true, true)
+                var drawScroll = false
+
+                ctx.fillStyle = "white"
+                ctx.strokeStyle = "white"
+                ctx.textAlign = "left"
+                Mouse.target.views.every((view, i) => {
+                    const h = 20 + i * 15
+                    console.log(h)
+                    if (h > height) {
+                        drawScroll = true
+                        return false
+                    }
+
+                    ctx.fillText(view.name, Mouse.target.position.x + 14, Mouse.target.position.y + h)
+                    return true
+                })
+
+                if (drawScroll) {
+                    ctx.fillStyle = "rgba(128,128,128,128)"
+                    ctx.strokeStyle = "white"
+                    roundRect(ctx, (Mouse.target.position.x + 10) + (Mouse.target.parent.scale.x * 0.75) - 8, Mouse.target.position.y + 6, 8, height / 2, 5, true, false)
+                }
+
+                // roundRect())
+            }
+        }
+
+        if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
+        if (making_connection) {
+            if (con1.direction == "OUTPUT")
+                con1.connections.push(con2), con2.connections.push(con2)
+            if (con2.direction == "OUTPUT")
+                con2.connections.push(con1), con2.connections.push(con1)
+
+            making_connection = false
+        }
+
+        if (!no_update)
+            UpdateAndDrawNodes()
+
+        e.preventDefault()
+        e.stopPropagation()
+    })
+
+    canvas.addEventListener('contextmenu', function (e) {
+        if (e.button == 2)
+            e.preventDefault()
+    })
+
+    window.addEventListener("resize", () => {
+        InitCanvas()
+    })
+
+    setInterval(() => {
+        NodeManager.GetNodes().forEach(node => {
+            // sum all non selection inputs
+            var inputs = 0, outputs = 0
+            Object.keys(node.inputs).forEach(l => {
+                if (node.inputs[l].type != "Selection") inputs++
+            })
+            Object.keys(node.outputs).forEach(l => {
+                if (node.outputs[l].hasOwnProperty("connections"))
+                    outputs += node.outputs[l].connections.length
+            })
+            if ((inputs == 0 && outputs > 0) || outputs > 0) {
+                node.execute()
+
+                if (!Mouse.dragging) UpdateAndDrawNodes()
+            }
+        })
+    }, 4)
+
+    InitCanvas()
+</script>
