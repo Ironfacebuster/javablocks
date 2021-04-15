@@ -3,7 +3,7 @@ function CreateNumberNode() {
 
     NumberNode.SetAccent("ff6600")
 
-    NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2", "RANDOM"]))
+    NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
     var o = NumberNode.AddOutput("Output", NodeManager.CreateNumberOutput())
 
     NumberNode.execute = () => {
@@ -13,9 +13,6 @@ function CreateNumberNode() {
             o.value = Math[fun]
         else {
             switch (fun) {
-                case "RANDOM":
-                    o.value = Math.random()
-                    break
                 default:
                     o.value = 0
             }
