@@ -339,7 +339,24 @@
     var making_connection = false,
         con1, con2
 
+    var inmenu = false
+
+    canvas.addEventListener("wheel", (e) => {
+        // console.log(e)
+        // only scroll menus if not holding control
+
+        if (e.ctrlKey == false && MenuOverlay.active) {
+            // scrolling menu
+            MenuOverlay.scrollHeight += e.deltaY
+            // console.log(MenuOverlay)
+            UpdateAndDrawNodes()
+        }
+
+        e.preventDefault()
+    })
+
     canvas.addEventListener('mousemove', (e) => {
+        if (Mouse.buttons[e.button]) Mouse.dragging = true
         var rect = canvas.getBoundingClientRect()
 
         Mouse.position = {
@@ -392,6 +409,7 @@
             })
 
         if (Mouse.target && Mouse.dragging) {
+            CloseMenuOverlay()
             // dragging something
 
             if (Mouse.target.type == "Node") {
@@ -460,7 +478,6 @@
             }
         }
 
-        if (Mouse.buttons[e.button]) Mouse.dragging = true
     }, false)
 
     // this function will check all visible objects
@@ -607,6 +624,10 @@
         })
     }
 
+    var MenuOverlay = {
+        scrollHeight: 0,
+        active: false
+    }
     function UpdateAndDrawNodes() {
         ClearCanvas()
 
@@ -622,6 +643,9 @@
         }
 
         // draw currently active menu
+        if (MenuOverlay.active) {
+            MenuOverlay.funct()
+        }
     }
 
     function HexToRGB(hex) {
@@ -653,6 +677,7 @@
         if (e.button == 0) {
             if (typeof Mouse.target != "undefined") {
                 if (Mouse.target.type == "Node") {
+                    CloseMenuOverlay()
                     var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
                     if (magnitude == 0) Mouse.target.position.velocity = {
                         x: 0,
@@ -671,42 +696,18 @@
 
                     // open the selection dropdown
                     // make this selection the active MENU
-                    console.log(Mouse.target)
-                    var calc_height = (Mouse.target.views.length) * 15 + 5
-                    var height = Math.max(15, calc_height)
-                    if (height > 155) height = 155
-                    console.log("HEIGHT", height)
-
-                    ctx.fillStyle = "rgba(0,0,0,0.15)"
-                    ctx.strokeStyle = "rgba(0,0,0,0.15)"
-                    roundRect(ctx, Mouse.target.position.x + 20, Mouse.target.position.y + 16, Mouse.target.parent.scale.x * 0.75, height, 5, true, false)
-
-                    ctx.strokeStyle = "white"
-                    ctx.fillStyle = "rgba(0,0,0,0.5)"
-                    roundRect(ctx, Mouse.target.position.x + 10, Mouse.target.position.y + 6, Mouse.target.parent.scale.x * 0.75, height, 5, true, true)
-                    var drawScroll = false
-
-                    ctx.fillStyle = "white"
-                    ctx.strokeStyle = "white"
-                    ctx.textAlign = "left"
-                    Mouse.target.views.every((view, i) => {
-                        const h = 20 + i * 15
-                        console.log(h)
-                        if (h > height) {
-                            drawScroll = true
-                            return false
-                        }
-
-                        ctx.fillText(view.name, Mouse.target.position.x + 14, Mouse.target.position.y + h)
-                        return true
+                    const pos = {
+                        x: Mouse.target.position.x,
+                        y: Mouse.target.position.y
+                    }
+                    SetMenuOverlay(pos, DrawSelectionDropdown, {
+                        views: Mouse.target.views,
+                        parent: Mouse.target.parent
                     })
 
-                    if (drawScroll) {
-                        ctx.fillStyle = "rgba(128,128,128,128)"
-                        ctx.strokeStyle = "white"
-                        roundRect(ctx, (Mouse.target.position.x + 10) + (Mouse.target.parent.scale.x * 0.75) - 8, Mouse.target.position.y + 6, 8, height / 2, 5, true, false)
-                    }
                 }
+            } else {
+                CloseMenuOverlay()
             }
 
             if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
@@ -723,7 +724,9 @@
                 UpdateAndDrawNodes()
         } else if (e.button == 2) {
             // release right click
+            CloseMenuOverlay()
             UpdateAndDrawNodes()
+            Mouse.target = GetOverlappedNode(Mouse.position)
             if (typeof Mouse.target != "undefined") {
                 // right clicked on something
                 if (Mouse.target.type == "Node") {
@@ -736,18 +739,32 @@
                         title: "Nodes",
                         views: ["Copy Node", "Delete Node"]
                     }]
-                    DrawContextMenu(views)
+                    // DrawContextMenu(views)
+                    const pos = {
+                        x: Mouse.position.x,
+                        y: Mouse.position.y
+                    }
+                    SetMenuOverlay(pos, DrawContextMenu, views)
+                    // SetMenuOverlay(() => { DrawContextMenu(views, pos) })
                 } else {
                     // input/output context menu
                     // make this context the active MENU
                     var views = [{ title: "Wires", views: ["New Wire", "Remove All Wires"] }]
-                    DrawContextMenu(views)
+                    const pos = {
+                        x: Mouse.position.x,
+                        y: Mouse.position.y
+                    }
+                    SetMenuOverlay(pos, DrawContextMenu, views)
                 }
             } else {
                 // general context menu
                 // make this context the active MENU
                 var views = [{ title: "Nodes", views: ["Create Empty Node", "Paste Node"] }]
-                DrawContextMenu(views)
+                const pos = {
+                    x: Mouse.position.x,
+                    y: Mouse.position.y
+                }
+                SetMenuOverlay(pos, DrawContextMenu, views)
             }
         }
 
@@ -755,25 +772,86 @@
         e.stopPropagation()
     })
 
-    function DrawContextMenu(views) {
+    function SetMenuOverlay(position, funct, data) {
+        MenuOverlay.funct = () => { funct(data, position) }
+        MenuOverlay.active = true
+        UpdateAndDrawNodes()
+    }
+
+    function CloseMenuOverlay() {
+        MenuOverlay.active = false
+        MenuOverlay.scrollHeight = 0
+    }
+
+    function DrawSelectionDropdown(data, position) {
+        const views = data.views
+        const parent = data.parent
+
+        var calc_height = (views.length) * 15 + 5
+        var height = Math.max(15, calc_height)
+        var drawScroll = false
+        if (height > 155) height = 155, drawScroll = true
+
+        var end_height = (views.length - 1) * 15 + 5
+
+        MenuOverlay.scrollHeight = Math.min(0, Math.max(-end_height + (9 * 15 + 5), MenuOverlay.scrollHeight))
+
+        ctx.fillStyle = "rgba(0,0,0,0.15)"
+        ctx.strokeStyle = "rgba(0,0,0,0.15)"
+        roundRect(ctx, position.x + 20, position.y + 16, parent.scale.x * 0.75, height, 5, true, false)
+
+        ctx.strokeStyle = "white"
+        ctx.fillStyle = "rgba(0,0,0,0.5)"
+        roundRect(ctx, position.x + 10, position.y + 6, parent.scale.x * 0.75, height, 5, true, true)
+
+        ctx.fillStyle = "white"
+        ctx.strokeStyle = "white"
+        ctx.textAlign = "left"
+
+        views.every((view, i) => {
+            const h = 20 + i * 15 + (drawScroll ? MenuOverlay.scrollHeight : 0)
+
+            if (h >= 16 && h <= height + 2)
+                ctx.fillText(view.name, position.x + 14, position.y + h)
+            return true
+        })
+
+        if (drawScroll) {
+            ctx.fillStyle = "rgba(128,128,128,0.25)"
+            ctx.strokeStyle = "white"
+            var new_height = position.y + 6
+
+            var c = MenuOverlay.scrollHeight,
+                b = calc_height,
+                y = height - (height / 3.75)
+
+            var result = (c * y) / b
+
+            new_height -= result
+
+            roundRect(ctx, (position.x + 10) + (parent.scale.x * 0.75) - 8, new_height, 8, height / 2, 5, true, false)
+        }
+    }
+
+    function DrawContextMenu(views, position) {
         // var views = ["New Wire", "Remove All Wires"]
         var num = views.length
         views.forEach(v => {
             num += v.views.length
         })
         var calc_height = (num * 18) + 10
-        console.log("NUMBER", num)
+        // console.log("NUMBER", num)
         var height = Math.max(15, calc_height)
         if (height > 155) height = 155
-        console.log("HEIGHT", height)
+        // console.log("HEIGHT", height)
 
         ctx.fillStyle = "rgba(0,0,0,0.15)"
         ctx.strokeStyle = "rgba(0,0,0,0.15)"
-        roundRect(ctx, Mouse.position.x + 10, Mouse.position.y + 10, 170, height, 5, true, false)
+        roundRect(ctx, position.x + 10, position.y + 10, 170, height, 5, true, false)
 
         ctx.fillStyle = "rgba(0,0,0,0.5)"
         ctx.strokeStyle = "white"
-        roundRect(ctx, Mouse.position.x, Mouse.position.y, 170, height, 5, true, true)
+        roundRect(ctx, position.x, position.y, 170, height, 5, true, true)
         var drawScroll = false
 
         ctx.font = "bold 12px Arial"
@@ -787,17 +865,17 @@
             if (view.title) {
                 ctx.fillStyle = "gray"
                 ctx.font = "bold 15px Arial"
-                ctx.fillText(view.title, Mouse.position.x + 6, Mouse.position.y + h + 2)
+                ctx.fillText(view.title, position.x + 6, position.y + h + 2)
                 ctx.font = "bold 12px Arial"
                 ctx.fillStyle = "white"
             }
 
-            console.log(view)
+            // console.log(view)
             i++
 
             view.views.forEach(element => {
                 h = 16 + i * 18
-                ctx.fillText(element, Mouse.position.x + 6, Mouse.position.y + h)
+                ctx.fillText(element, position.x + 6, position.y + h)
                 i++
             })
 
