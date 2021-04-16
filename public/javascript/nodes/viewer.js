@@ -1,8 +1,8 @@
 function CreateViewerNode() {
-    var NumberNode = NodeManager.CreateNode("Number Viewer", "A node that will display a number.")
+    var NumberNode = NodeManager.CreateNode("Value Viewer", "A node that will display a value.")
 
     NumberNode.SetAccent("4488ff")
-    NumberNode.AddInput("Input", NodeManager.CreateNumberInput())
+    NumberNode.AddInput("Input", NodeManager.CreateAnyInput())
     NumberNode.AddOutput("Output", NodeManager.CreateNumberViewerOutput())
 
     NumberNode.execute = () => {
