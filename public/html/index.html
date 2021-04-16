@@ -6,10 +6,10 @@
     <!-- default nodes -->
     <!-- these essentially act as wrappers for javascript -->
     <!-- they're a little different in some cases, though -->
-    <script src="../javascript/nodes/math.js" defer></script>
-    <script src="../javascript/nodes/number.js" defer></script>
+    <script src="../javascript/nodes/all-nodes.js" defer></script>
+    <!-- <script src="../javascript/nodes/number.js" defer></script>
     <script src="../javascript/nodes/viewer.js" defer></script>
-    <script src="../javascript/nodes/random.js" defer></script>
+    <script src="../javascript/nodes/random.js" defer></script> -->
 
     <style>
         body {
@@ -144,9 +144,12 @@
                 ctx.strokeStyle = "white"
                 ctx.fillText(input, position.x + 10, position.y + nHeight)
 
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "black"
+                ctx.lineWidth = 2
+                const color = GetColorByType(node.inputs[input].type)
+                ctx.fillStyle = color.fill
+                ctx.strokeStyle = color.stroke
                 circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
+                ctx.lineWidth = 1
             } else {
                 // draw the selection box
                 const xpos = position.x + 10,
@@ -195,9 +198,12 @@
                 ctx.strokeStyle = "white"
                 ctx.fillText(o, position.x + scale.x - 10, position.y + nHeight)
 
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "black"
+                ctx.lineWidth = 2
+                const color = GetColorByType(output.type)
+                ctx.fillStyle = color.fill
+                ctx.strokeStyle = color.stroke
                 circle(ctx, position.x + scale.x, (position.y + nHeight) - 4, 5, true, true)
+                ctx.lineWidth = 1
             }
 
             nHeight += 25
@@ -266,6 +272,23 @@
         if (stroke)
             ctx.stroke()
 
+    }
+
+    function GetColorByType(type) {
+        switch (type) {
+            case "Number":
+                return {
+                    // fill: "#0077bb",
+                    fill: "white",
+                    stroke: "#0077bb"
+                    // stroke: "#005588"
+                }
+            default:
+                return {
+                    stroke: "black",
+                    fill: "white"
+                }
+        }
     }
 
     function DrawConnection(source, dest, shadow) {
@@ -354,7 +377,7 @@
                 }
 
                 // default select node
-                var t = CheckPointInNode(node, Mouse.position)
+                var t = GetOverlappedNode(Mouse.position)
 
                 if (t) {
                     Mouse.target = t
@@ -402,22 +425,20 @@
                 ClearCanvas()
                 var endpoint = Mouse.position
 
-                NodeManager.GetNodes().forEach(node => {
-                    var t = CheckPointInNode(node, Mouse.position)
+                var t = GetOverlappedNode(Mouse.position)
 
-                    // making_connection = false
+                // making_connection = false
 
-                    // console.log(t, Mouse.target)
+                // console.log(t, Mouse.target)
 
-                    if (typeof t != "undefined" && t.type != "Node" && t.type != "Selection" && t.direction != Mouse.target.direction && t.parent != Mouse.target.parent && t.type == Mouse.target.type) {
-                        endpoint = t.position
-                        con1 = Mouse.target
-                        con2 = t
-                        making_connection = true
-                    }
+                if (typeof t != "undefined" && t.type != "Node" && t.type != "Selection" && t.direction != Mouse.target.direction && t.parent != Mouse.target.parent && t.type == Mouse.target.type) {
+                    endpoint = t.position
+                    con1 = Mouse.target
+                    con2 = t
+                    making_connection = true
+                }
 
-                    if (endpoint == Mouse.position) making_connection = false
-                })
+                if (endpoint == Mouse.position) making_connection = false
 
                 UpdateAndDrawNodes()
 
@@ -429,15 +450,36 @@
                     ctx.strokeStyle = "rgba(0,0,0,0.15)"
                     circle(ctx, endpoint.x + 5, endpoint.y + 5, 5, true, true)
 
-                    ctx.fillStyle = "white"
-                    ctx.strokeStyle = "black"
-                    circle(ctx, endpoint.x, endpoint.y, 5, true, false)
+                    ctx.lineWidth = 2
+                    const color = GetColorByType(Mouse.target.type)
+                    ctx.fillStyle = color.fill
+                    ctx.strokeStyle = color.stroke
+                    circle(ctx, endpoint.x, endpoint.y, 5, true, true)
+                    ctx.lineWidth = 1
                 }
             }
         }
 
         if (Mouse.buttons[e.button]) Mouse.dragging = true
     }, false)
+
+    // this function will check all visible objects
+    // Nodes, context menus, dropdowns
+    // right now only checks nodes
+    function GetOverlappedNode(point) {
+        var target = undefined
+        NodeManager.GetNodes().every(node => {
+            var t = CheckPointInNode(node, point)
+
+            if (typeof t != "undefined") {
+                target = t
+                return false
+            }
+            return true
+        })
+
+        return target
+    }
 
     function CheckPointInNode(node, point) {
         const pos = node.position,
@@ -579,6 +621,7 @@
             DrawNode(nodes[i])
         }
 
+        // draw currently active menu
     }
 
     function HexToRGB(hex) {
@@ -627,6 +670,7 @@
                     no_update = true
 
                     // open the selection dropdown
+                    // make this selection the active MENU
                     console.log(Mouse.target)
                     var calc_height = (Mouse.target.views.length) * 15 + 5
                     var height = Math.max(15, calc_height)
@@ -684,6 +728,7 @@
                 // right clicked on something
                 if (Mouse.target.type == "Node") {
                     // Node context menu
+                    // make this context the active MENU
                     var views = [{
                         title: "Wires",
                         views: ["Remove Input Wires", "Remove Output Wires", "Remove All Wires"]
@@ -694,11 +739,13 @@
                     DrawContextMenu(views)
                 } else {
                     // input/output context menu
+                    // make this context the active MENU
                     var views = [{ title: "Wires", views: ["New Wire", "Remove All Wires"] }]
                     DrawContextMenu(views)
                 }
             } else {
                 // general context menu
+                // make this context the active MENU
                 var views = [{ title: "Nodes", views: ["Create Empty Node", "Paste Node"] }]
                 DrawContextMenu(views)
             }
