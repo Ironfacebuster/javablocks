@@ -26,7 +26,14 @@
 </head>
 
 <body>
-    <button onclick="addnode()">Add Node</button>
+    <!-- <button onclick="addnode()">Add Node</button> -->
+    <button onclick="CreateMathNode()">Add Math Node</button>
+    <button onclick="CreateNumberNode()">Add Number Node</button>
+    <button onclick="CreateOperationsNode()">Add Operations Node</button>
+    <button onclick="CreateRandomNode()">Add Random Node</button>
+    <button onclick="CreateIfNode()">Add Comparison Node</button>
+    <button onclick="CreateInverterNode()">Add Inverter Node</button>
+    <button onclick="CreateViewerNode()">Add Viewer Node</button>
 
     <canvas id="main">
 
@@ -44,7 +51,9 @@
             0: false,
             1: false
         },
-        dragging: false
+        dragging: false,
+        selecting: false,
+        slicing: false
     }
 
     var positions = {},
@@ -56,7 +65,7 @@
     function addnode() {
         // var d = document.getElementById("nodes")
         // d.innerHTML = ""
-        var list = [CreateMathNode, CreateNumberNode, CreateViewerNode, CreateRandomNode]
+        var list = [CreateMathNode, CreateNumberNode, CreateViewerNode, CreateRandomNode, CreateOperationsNode]
 
         const new_node = list[Math.floor(Math.random() * list.length)]()
         new_node.position = {
@@ -70,7 +79,6 @@
         if (startY > canvas.height - 125)
             startY = 25, startX += 175
     }
-
 
     var canvas = document.getElementById("main")
     var ctx = canvas.getContext("2d")
@@ -119,8 +127,6 @@
         var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, 0.5)`
         ctx.fillStyle = rgba_accent
         ctx.strokeStyle = rgba_accent
-        // ctx.fillStyle = "#" + node.accent
-        // ctx.strokeStyle = "#" + node.accent
         roundRect(ctx, position.x, position.y, scale.x, scale.y, 5, true, false)
 
         const accentWidth = 5
@@ -137,32 +143,34 @@
         ctx.font = "bold 12px Arial"
         var nHeight = 20
         // draw inputs/outputs
-        Object.keys(node.inputs).forEach(input => {
+        Object.keys(node.inputs).forEach(i => {
+            var input = node.inputs[i]
+            switch (input.type) {
+                case "Selection":
+                    // draw the selection box
+                    const xpos = position.x + 10,
+                        ypos = position.y + nHeight - 12
 
-            if (node.inputs[input].type != "Selection") {
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "white"
-                ctx.fillText(input, position.x + 10, position.y + nHeight)
+                    ctx.fillStyle = "rgba(0,0,0,0.5)"
+                    ctx.strokeStyle = "white"
+                    roundRect(ctx, xpos, ypos, scale.x / 2 - 10, 15, 5, true, true)
 
-                ctx.lineWidth = 2
-                const color = GetColorByType(node.inputs[input].type)
-                ctx.fillStyle = color.fill
-                ctx.strokeStyle = color.stroke
-                circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
-                ctx.lineWidth = 1
-            } else {
-                // draw the selection box
-                const xpos = position.x + 10,
-                    ypos = position.y + nHeight - 12
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "white"
+                    ctx.fillText(input.currentView.name, position.x + 14, position.y + nHeight)
+                    break
+                default:
+                    // draw default input
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "white"
+                    ctx.fillText(i, position.x + 10, position.y + nHeight)
 
-                ctx.fillStyle = "rgba(0,0,0,0.5)"
-                ctx.strokeStyle = "white"
-                roundRect(ctx, xpos, ypos, scale.x / 2 - 10, 15, 5, true, true)
-
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "white"
-                ctx.fillText(node.inputs[input].currentView.name, position.x + 14, position.y + nHeight)
-                // roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
+                    ctx.lineWidth = 2
+                    const color = GetColorByType(input.type)
+                    ctx.fillStyle = color.fill
+                    ctx.strokeStyle = color.stroke
+                    circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
+                    ctx.lineWidth = 1
             }
 
             nHeight += 25
@@ -171,39 +179,41 @@
         nHeight = 20
 
         ctx.textAlign = "right"
-        // for (var output in node.outputs) {
 
-        // }
         Object.keys(node.outputs).forEach(o => {
             var output = node.outputs[o]
-            if (output.type == "Viewer") {
-                // if the output type is a Viewer, eg Number Viewer
-                ctx.fillStyle = "rgba(0,0,0,0.5)"
-                ctx.strokeStyle = "white"
 
-                roundRect(ctx, position.x + scale.x - 70, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, false)
+            switch (output.type) {
+                case "Viewer":
+                    // if the output type is a Viewer, eg Number Viewer
+                    ctx.fillStyle = "rgba(0,0,0,0.5)"
+                    ctx.strokeStyle = "white"
 
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "white"
-                ctx.textAlign = "left"
+                    roundRect(ctx, position.x + scale.x - 70, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, false)
 
-                var name = node.inputs["Input"].value.toString()
-                const maxWidth = scale.x / 2 - 18
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "white"
+                    ctx.textAlign = "left"
 
-                while (ctx.measureText(name).width > maxWidth) name = name.substr(0, name.length - 1)
+                    var name = node.inputs["Input"].value.toString()
+                    const maxWidth = scale.x / 2 - 18
 
-                ctx.fillText(name, position.x + scale.x - 66, position.y + nHeight)
-            } else {
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "white"
-                ctx.fillText(o, position.x + scale.x - 10, position.y + nHeight)
+                    while (ctx.measureText(name).width > maxWidth) name = name.substr(0, name.length - 1)
 
-                ctx.lineWidth = 2
-                const color = GetColorByType(output.type)
-                ctx.fillStyle = color.fill
-                ctx.strokeStyle = color.stroke
-                circle(ctx, position.x + scale.x, (position.y + nHeight) - 4, 5, true, true)
-                ctx.lineWidth = 1
+                    ctx.fillText(name, position.x + scale.x - 66, position.y + nHeight)
+                    break
+                default:
+                    // draw default output
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "white"
+                    ctx.fillText(o, position.x + scale.x - 10, position.y + nHeight)
+
+                    ctx.lineWidth = 2
+                    const color = GetColorByType(output.type)
+                    ctx.fillStyle = color.fill
+                    ctx.strokeStyle = color.stroke
+                    circle(ctx, position.x + scale.x, (position.y + nHeight) - 4, 5, true, true)
+                    ctx.lineWidth = 1
             }
 
             nHeight += 25
@@ -283,10 +293,17 @@
                     stroke: "#0077bb"
                     // stroke: "#005588"
                 }
+            case "Boolean":
+                return {
+                    // fill: "#0077bb",
+                    fill: "white",
+                    stroke: "#ff6600"
+                    // stroke: "#005588"
+                }
             default:
                 return {
-                    stroke: "black",
-                    fill: "white"
+                    fill: "white",
+                    stroke: "gray"
                 }
         }
     }
@@ -346,6 +363,8 @@
         // only scroll menus if not holding control
 
         if (e.ctrlKey == false && MenuOverlay.active) {
+            // eventually check to see if within the open menu
+            // console.log(e)
             // scrolling menu
             MenuOverlay.scrollHeight += e.deltaY
             // console.log(MenuOverlay)
@@ -449,7 +468,7 @@
 
                 // console.log(t, Mouse.target)
 
-                if (typeof t != "undefined" && t.type != "Node" && t.type != "Selection" && t.direction != Mouse.target.direction && t.parent != Mouse.target.parent && t.type == Mouse.target.type) {
+                if (typeof t != "undefined" && t.type != "Node" && t.type != "Selection" && t.direction != Mouse.target.direction && t.parent != Mouse.target.parent && (t.type == Mouse.target.type || t.type == "Any" || Mouse.target.type == "Any")) {
                     endpoint = t.position
                     con1 = Mouse.target
                     con2 = t
@@ -475,6 +494,36 @@
                     circle(ctx, endpoint.x, endpoint.y, 5, true, true)
                     ctx.lineWidth = 1
                 }
+            }
+        } else if (Mouse.dragging) {
+            // console.log(Mouse.startPosition)
+            if (!e.ctrlKey) {
+                // dragging selection box
+                const width = Mouse.position.x - Mouse.startPosition.x,
+                    height = Mouse.position.y - Mouse.startPosition.y
+
+                UpdateAndDrawNodes()
+
+                ctx.fillStyle = "rgba(0,255,128,0.1)"
+                ctx.strokeStyle = "rgba(0,255,64,0.75)"
+                ctx.beginPath()
+                ctx.fillRect(Mouse.startPosition.x, Mouse.startPosition.y, width, height)
+                ctx.stroke()
+
+                Mouse.selecting = true
+                // console.log("Selecting")
+            } else {
+                // cutting wires
+                UpdateAndDrawNodes()
+                ctx.fillStyle = "rgba(0,255,128,0.1)"
+                ctx.strokeStyle = "rgba(0,255,64,0.75)"
+                ctx.beginPath()
+                ctx.moveTo(Mouse.startPosition.x, Mouse.startPosition.y)
+                ctx.lineTo(Mouse.position.x, Mouse.position.y)
+                ctx.stroke()
+
+                Mouse.slicing = true
+                // console.log("Slicing")
             }
         }
 
@@ -665,6 +714,8 @@
     canvas.addEventListener('mousedown', (e) => {
         Mouse.buttons[e.button] = true
 
+        if (Mouse.buttons[0]) Mouse.startPosition = Mouse.position
+
         e.preventDefault()
         e.stopPropagation()
     })
@@ -675,6 +726,81 @@
         var no_update = false
 
         if (e.button == 0) {
+            if (Mouse.slicing) {
+                var sliced_connections = []
+                console.log("Stop slicing")
+                Mouse.slicing = false
+
+                // check all wires for intersections
+                NodeManager.GetNodes().forEach(node => {
+                    if (Object.keys(node.outputs).length > 0)
+                        Object.keys(node.outputs).forEach(o => {
+                            // bezier curve will be calculated with low resolution for speed
+                            var output = node.outputs[o]
+
+                            if (output.connections && output.connections.length > 0)
+                                output.connections.forEach((c, index) => {
+                                    // console.log("CON", c)
+                                    var mid = {
+                                        x: (output.position.x + c.position.x) / 2,
+                                        y: (output.position.y + c.position.y) / 2
+                                    }
+
+                                    var c_point1 = {
+                                        x: (mid.x + output.position.x) / 2,
+                                        y: output.position.y
+                                    }
+
+                                    var c_point2 = {
+                                        x: (mid.x + c.position.x) / 2,
+                                        y: c.position.y
+                                    }
+
+                                    for (var i = 0; i <= 100; i += 4) {
+                                        const t = i / 100,
+                                            t2 = (i + 4) / 100
+
+                                        const point1 = CalculateBezier(t, c_point1, mid, c_point2),
+                                            point2 = CalculateBezier(t2, c_point1, mid, c_point2)
+
+                                        if (Intersecting(Mouse.startPosition, Mouse.position, point1, point2)) {
+                                            console.log("INTERSECTION!")
+                                            sliced_connections.push({
+                                                base: output,
+                                                connection: c,
+                                                index: index
+                                            })
+                                            break
+                                        }
+                                    }
+                                })
+                        })
+                })
+
+                console.log("SLICED", sliced_connections)
+
+                sliced_connections.forEach(con => {
+                    console.log(con)
+                    // since inputs can only have one connection, clear the input's connections
+                    con.connection.connections = []
+                    con.connection.value = con.connection.default_value
+                    if (con.connection.hasOwnProperty("execute"))
+                        con.connection.execute()
+                    if (con.base.connections.length > 1 && con.index > 0 && con.index < con.base.connections.length - 1)
+                        con.base.connections = con.base.connections.splice(con.index - 1, 1)
+                    else if (con.index == 0) con.base.connections.shift()
+                    else if (con.index == con.base.connections.length - 1) con.base.connections.pop()
+                    else if (con.base.connections.length == 1) con.base.connections = []
+                })
+
+                UpdateAndDrawNodes()
+            }
+
+            if (Mouse.selecting) {
+                console.log("Stop selecting")
+                Mouse.selecting = false
+            }
+
             if (typeof Mouse.target != "undefined") {
                 if (Mouse.target.type == "Node") {
                     CloseMenuOverlay()
@@ -712,10 +838,10 @@
 
             if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
             if (making_connection) {
-                if (con1.direction == "OUTPUT")
+                if (con1.direction == "OUTPUT" && con2.connections.length == 0)
                     con1.connections.push(con2), con2.connections.push(con2)
-                if (con2.direction == "OUTPUT")
-                    con2.connections.push(con1), con2.connections.push(con1)
+                else if (con2.direction == "OUTPUT" && con1.connections.length == 0)
+                    con2.connections.push(con1), con1.connections.push(con2)
 
                 making_connection = false
             }
@@ -881,6 +1007,109 @@
 
         })
     }
+
+    function CalculateBezier(t, p1, p2, p3) {
+        // x = (1−t)2x1 + 2(1−t)tx2 + t2x3
+        var n_x = Math.pow((1 - t), 2) * p1.x
+        n_x += 2 * (1 - t) * t * p2.x
+        n_x += Math.pow(t, 2) * p3.x
+
+        // y = (1−t)2y1 + 2(1−t)ty2 + t2y3
+        var n_y = Math.pow((1 - t), 2) * p1.y
+        n_y += 2 * (1 - t) * t * p2.y
+        n_y += Math.pow(t, 2) * p3.y
+
+        return {
+            t: t,
+            x: n_x,
+            y: n_y
+        }
+    }
+
+    function OnLine(l1, l2, p) {
+        if (p.x <= Math.max(l1.x, l2.x) && p.x <= Math.min(l1.x, l2.x) && (p.y <= Math.max(l1.y, l2.y) && p.y <= Math.min(l1.y, l2.y)))
+            return true
+
+        return false
+    }
+
+    function LineDirection(a, b, c) {
+        var val = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y)
+        if (val == 0)
+            return 0
+        else if (val < 0)
+            return 2
+        return 1
+    }
+
+    function Intersecting(l1p1, l1p2, l2p1, l2p2) {
+        var dir1 = LineDirection(l1p1, l1p2, l2p1),
+            dir2 = LineDirection(l1p1, l1p2, l2p2),
+            dir3 = LineDirection(l2p1, l2p2, l1p1),
+            dir4 = LineDirection(l2p1, l2p2, l1p2)
+
+        if (dir1 != dir2 && dir3 != dir4) return true
+        if (dir1 == 0 && OnLine(l1p1, l1p2, l2p1)) return true
+        if (dir2 == 0 && OnLine(l1p1, l1p2, l2p2)) return true
+        if (dir3 == 0 && OnLine(l2p1, l2p2, l1p1)) return true
+        if (dir4 == 0 && OnLine(l2p1, l2p2, l1p2)) return true
+
+        return false
+    }
+
+    // a little closer, but no cigar.
+    // function CalculateBezier(t) {
+    //     const start = 1,
+    //         end = arguments.length - 1
+
+    //     const exp_start = arguments.length - 2
+    //     var exp = arguments.length - 2,
+    //         mant = 1
+
+    //     var n_x = 0,
+    //         n_y = 0
+
+    //     for (var i = 1; i < arguments.length; ++i) {
+    //         if (i == start) {
+    //             console.log("START")
+    //             // beginning of bezier curve
+    //             // if there are 4 points, exp == 3
+    //             n_x += (Math.pow(1 - t, exp) * arguments[i].x)
+    //             n_y += (Math.pow(1 - t, exp) * arguments[i].y)
+    //         } else if (i == end) {
+    //             // end of bezier curve
+    //             console.log("END")
+    //             n_x += (Math.pow(t, exp_start) * arguments[i].x)
+    //             n_y += (Math.pow(t, exp_start) * arguments[i].y)
+    //         } else {
+    //             console.log("EXPONENT", exp)
+    //             console.log("EXPONENT START", exp_start)
+    //             console.log("MANT", mant)
+    //             // in the middle of the curve
+    //             if (exp == 1) {
+    //                 // n_x += (3 * (1 - t) * (t * t) * p3.x)
+    //                 // n_x += (exp_start * (1 - t) )
+    //                 console.log(exp)
+    //             } else if (exp > 1) {
+    //                 // n_x += (3 * Math.pow(1 - t, 2) * t * p2.x)
+    //                 n_x += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].x
+    //                 n_y += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].y
+    //             }
+    //             // if (exp > 1) {
+    //             //     n_x += (Math.pow(t, exp))
+    //             // }
+    //         }
+
+    //         exp--
+    //         mant++
+    //     }
+
+    //     return {
+    //         t: t,
+    //         x: n_x,
+    //         y: n_y
+    //     }
+    // }
 
     canvas.addEventListener('contextmenu', function (e) {
         if (e.button == 2)
