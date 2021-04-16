@@ -2,7 +2,7 @@ const fs = require("fs")
 const http = require("http")
 
 const public = "./public"
-var port = process.env.$PORT || 4040
+var port = process.env.PORT || 4040
 
 const server = http.createServer((req, res) => {
     if (fs.existsSync(`./public/${req.url}`)) {
