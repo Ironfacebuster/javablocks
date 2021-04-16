@@ -169,6 +169,7 @@ function NMCreateNumberInput(default_value) {
         type: "Number",
         direction: "INPUT",
         value: default_value,
+        default_value: default_value,
         connections: []
     }
 }
@@ -178,6 +179,7 @@ function NMCreateNumberOutput() {
         type: "Number",
         direction: "OUTPUT",
         value: 0,
+        default_value: 0,
         connections: []
     }
 }
@@ -186,17 +188,18 @@ function NMCreateNumberViewer() {
     return {
         type: "Viewer",
         direction: "OUTPUT",
-        value: 0
+        value: 0,
+        default_value: "null"
     }
 }
 
-function NMCreateArrayInput(default_value) {
-    default_value = default_value || 0
+function NMCreateArrayInput() {
 
     return {
         type: "Array",
         direction: "INPUT",
-        value: default_value,
+        value: [],
+        default_value: [],
         connections: []
     }
 }
@@ -205,11 +208,53 @@ function NMCreateArrayOutput() {
     return {
         type: "Array",
         direction: "OUTPUT",
-        value: 0,
+        value: [],
+        default_value: [],
         connections: []
     }
 }
 
+function NMCreateBoolInput(default_value) {
+    default_value = default_value || false
+
+    return {
+        type: "Boolean",
+        direction: "INPUT",
+        value: default_value,
+        default_value: default_value,
+        connections: []
+    }
+}
+
+function NMCreateBoolOutput() {
+    return {
+        type: "Boolean",
+        direction: "OUTPUT",
+        value: false,
+        default_value: false,
+        connections: []
+    }
+}
+
+function NMCreateAnyInput() {
+    return {
+        type: "Any",
+        direction: "INPUT",
+        value: "null",
+        default_value: "null",
+        connections: []
+    }
+}
+
+function NMCreateAnyOutput() {
+    return {
+        type: "Any",
+        direction: "OUTPUT",
+        value: "null",
+        default_value: "null",
+        connections: []
+    }
+}
 
 window.NodeManager = {
     CreateNode: NMCreateNode,
@@ -219,7 +264,12 @@ window.NodeManager = {
     CreateNumberViewerOutput: NMCreateNumberViewer,
     CreateArrayInput: NMCreateArrayInput,
     CreateArrayOutput: NMCreateArrayOutput,
+    CreateBoolInput: NMCreateBoolInput,
+    CreateBoolOutput: NMCreateBoolOutput,
+    CreateAnyInput: NMCreateAnyInput,
+    CreateAnyOutput: NMCreateAnyOutput,
     GetNodes: () => {
+        // sort nodes by z index
         nodes = nodes.sort((a, b) => {
             return b.zindex - a.zindex
         })
