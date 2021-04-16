@@ -9,8 +9,14 @@
     <script src="../javascript/nodes/math.js" defer></script>
     <script src="../javascript/nodes/number.js" defer></script>
     <script src="../javascript/nodes/viewer.js" defer></script>
+    <script src="../javascript/nodes/random.js" defer></script>
 
     <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
         canvas {
             display: block;
             margin-left: auto;
@@ -50,7 +56,7 @@
     function addnode() {
         // var d = document.getElementById("nodes")
         // d.innerHTML = ""
-        var list = [CreateMathNode, CreateNumberNode, CreateViewerNode]
+        var list = [CreateMathNode, CreateNumberNode, CreateViewerNode, CreateRandomNode]
 
         const new_node = list[Math.floor(Math.random() * list.length)]()
         new_node.position = {
@@ -104,8 +110,8 @@
         scale.y += (Math.max(Object.keys(node.inputs).length, Object.keys(node.outputs).length) * 25)
 
         // draw shadow
-        ctx.fillStyle = "rgba(0.5,0.5,0.5,0.15)"
-        ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+        ctx.fillStyle = "rgba(0,0,0,0.15)"
+        ctx.strokeStyle = "rgba(0,0,0,0.15)"
         roundRect(ctx, position.x + 5, position.y + 5, scale.x, scale.y, 5, true, false)
 
         // draw outside w/ accent
@@ -143,9 +149,12 @@
                 circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
             } else {
                 // draw the selection box
-                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
+                const xpos = position.x + 10,
+                    ypos = position.y + nHeight - 12
+
+                ctx.fillStyle = "rgba(0,0,0,0.5)"
                 ctx.strokeStyle = "white"
-                roundRect(ctx, position.x + 10, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
+                roundRect(ctx, xpos, ypos, scale.x / 2 - 10, 15, 5, true, true)
 
                 ctx.fillStyle = "white"
                 ctx.strokeStyle = "white"
@@ -166,15 +175,21 @@
             var output = node.outputs[o]
             if (output.type == "Viewer") {
                 // if the output type is a Viewer, eg Number Viewer
-                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
+                ctx.fillStyle = "rgba(0,0,0,0.5)"
                 ctx.strokeStyle = "white"
 
-                roundRect(ctx, position.x + scale.x - 70, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
+                roundRect(ctx, position.x + scale.x - 70, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, false)
 
                 ctx.fillStyle = "white"
                 ctx.strokeStyle = "white"
                 ctx.textAlign = "left"
-                ctx.fillText(node.inputs["Input"].value, position.x + scale.x - 66, position.y + nHeight)
+
+                var name = node.inputs["Input"].value.toString()
+                const maxWidth = scale.x / 2 - 18
+
+                while (ctx.measureText(name).width > maxWidth) name = name.substr(0, name.length - 1)
+
+                ctx.fillText(name, position.x + scale.x - 66, position.y + nHeight)
             } else {
                 ctx.fillStyle = "white"
                 ctx.strokeStyle = "white"
@@ -189,6 +204,7 @@
         })
 
         node.scale = scale
+        node.MarkDirty(false)
     }
 
     function DrawNodeConnections() {
@@ -198,6 +214,7 @@
                 if (node.outputs[output].hasOwnProperty("connections"))
                     node.outputs[output].connections.forEach(con => {
                         DrawConnection(node.outputs[output].position, con.position)
+                        con.parent.MarkDirty(true)
                     })
             })
         })
@@ -281,7 +298,7 @@
             ctx.stroke()
 
             if (shadow) {
-                ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+                ctx.strokeStyle = "rgba(0,0,0,0.15)"
                 ctx.beginPath()
                 ctx.moveTo(source.x + 5, source.y + 5)
                 ctx.bezierCurveTo(source.x + 5, source.y + 5, c_point1.x + 5, c_point1.y + 5, mid.x + 5, mid.y + 5)
@@ -373,9 +390,9 @@
                     y: Mouse.position.y - dragOffset.y
                 }
 
-                UpdateNodePositions(Mouse.target)
+                // Mouse.target.MarkDirty(true)
 
-                // DrawNode(Mouse.target)
+                UpdateNodePositions(Mouse.target)
 
                 UpdateAndDrawNodes()
             } else if (Mouse.target.type != "Selection") {
@@ -408,8 +425,8 @@
 
                 // only draw point if following the mouse
                 if (endpoint == Mouse.position) {
-                    ctx.fillStyle = "rgba(0.5,0.5,0.5,0.15)"
-                    ctx.strokeStyle = "rgba(0.5,0.5,0.5,0.15)"
+                    ctx.fillStyle = "rgba(0,0,0,0.15)"
+                    ctx.strokeStyle = "rgba(0,0,0,0.15)"
                     circle(ctx, endpoint.x + 5, endpoint.y + 5, 5, true, true)
 
                     ctx.fillStyle = "white"
@@ -558,6 +575,7 @@
         // })
         var nodes = NodeManager.GetNodes()
         for (var i = nodes.length - 1; i >= 0; --i) {
+            // if (nodes[i].isDirty())
             DrawNode(nodes[i])
         }
 
@@ -589,76 +607,155 @@
 
         var no_update = false
 
-        if (typeof Mouse.target != "undefined") {
-            if (Mouse.target.type == "Node") {
-                var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
-                if (magnitude == 0) Mouse.target.position.velocity = {
-                    x: 0,
-                    y: 0,
-                    magnitude: 0
-                }
-                else Mouse.target.position.velocity = {
-                    x: Mouse.velocity.x / magnitude,
-                    y: Mouse.velocity.y / magnitude,
-                    magnitude: magnitude
-                }
-            } else if (Mouse.target.type == "Selection") {
-                canvas.style.cursor = "auto"
-                UpdateAndDrawNodes()
-                no_update = true
-
-                // open the selection dropdown
-                console.log(Mouse.target)
-                ctx.fillStyle = "rgba(0.5,0.5,0.5,0.5)"
-                ctx.strokeStyle = "white"
-                var calc_height = (Mouse.target.views.length) * 15 + 5
-                var height = Math.max(15, calc_height)
-                if (height > 155) height = 155
-                console.log("HEIGHT", height)
-                roundRect(ctx, Mouse.target.position.x + 10, Mouse.target.position.y + 6, Mouse.target.parent.scale.x * 0.75, height, 5, true, true)
-                var drawScroll = false
-
-                ctx.fillStyle = "white"
-                ctx.strokeStyle = "white"
-                ctx.textAlign = "left"
-                Mouse.target.views.every((view, i) => {
-                    const h = 20 + i * 15
-                    console.log(h)
-                    if (h > height) {
-                        drawScroll = true
-                        return false
+        if (e.button == 0) {
+            if (typeof Mouse.target != "undefined") {
+                if (Mouse.target.type == "Node") {
+                    var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
+                    if (magnitude == 0) Mouse.target.position.velocity = {
+                        x: 0,
+                        y: 0,
+                        magnitude: 0
                     }
+                    else Mouse.target.position.velocity = {
+                        x: Mouse.velocity.x / magnitude,
+                        y: Mouse.velocity.y / magnitude,
+                        magnitude: magnitude
+                    }
+                } else if (Mouse.target.type == "Selection") {
+                    canvas.style.cursor = "auto"
+                    UpdateAndDrawNodes()
+                    no_update = true
 
-                    ctx.fillText(view.name, Mouse.target.position.x + 14, Mouse.target.position.y + h)
-                    return true
-                })
+                    // open the selection dropdown
+                    console.log(Mouse.target)
+                    var calc_height = (Mouse.target.views.length) * 15 + 5
+                    var height = Math.max(15, calc_height)
+                    if (height > 155) height = 155
+                    console.log("HEIGHT", height)
 
-                if (drawScroll) {
-                    ctx.fillStyle = "rgba(128,128,128,128)"
+                    ctx.fillStyle = "rgba(0,0,0,0.15)"
+                    ctx.strokeStyle = "rgba(0,0,0,0.15)"
+                    roundRect(ctx, Mouse.target.position.x + 20, Mouse.target.position.y + 16, Mouse.target.parent.scale.x * 0.75, height, 5, true, false)
+
                     ctx.strokeStyle = "white"
-                    roundRect(ctx, (Mouse.target.position.x + 10) + (Mouse.target.parent.scale.x * 0.75) - 8, Mouse.target.position.y + 6, 8, height / 2, 5, true, false)
-                }
+                    ctx.fillStyle = "rgba(0,0,0,0.5)"
+                    roundRect(ctx, Mouse.target.position.x + 10, Mouse.target.position.y + 6, Mouse.target.parent.scale.x * 0.75, height, 5, true, true)
+                    var drawScroll = false
 
-                // roundRect())
+                    ctx.fillStyle = "white"
+                    ctx.strokeStyle = "white"
+                    ctx.textAlign = "left"
+                    Mouse.target.views.every((view, i) => {
+                        const h = 20 + i * 15
+                        console.log(h)
+                        if (h > height) {
+                            drawScroll = true
+                            return false
+                        }
+
+                        ctx.fillText(view.name, Mouse.target.position.x + 14, Mouse.target.position.y + h)
+                        return true
+                    })
+
+                    if (drawScroll) {
+                        ctx.fillStyle = "rgba(128,128,128,128)"
+                        ctx.strokeStyle = "white"
+                        roundRect(ctx, (Mouse.target.position.x + 10) + (Mouse.target.parent.scale.x * 0.75) - 8, Mouse.target.position.y + 6, 8, height / 2, 5, true, false)
+                    }
+                }
+            }
+
+            if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
+            if (making_connection) {
+                if (con1.direction == "OUTPUT")
+                    con1.connections.push(con2), con2.connections.push(con2)
+                if (con2.direction == "OUTPUT")
+                    con2.connections.push(con1), con2.connections.push(con1)
+
+                making_connection = false
+            }
+
+            if (!no_update)
+                UpdateAndDrawNodes()
+        } else if (e.button == 2) {
+            // release right click
+            UpdateAndDrawNodes()
+            if (typeof Mouse.target != "undefined") {
+                // right clicked on something
+                if (Mouse.target.type == "Node") {
+                    // Node context menu
+                    var views = [{
+                        title: "Wires",
+                        views: ["Remove Input Wires", "Remove Output Wires", "Remove All Wires"]
+                    }, {
+                        title: "Nodes",
+                        views: ["Copy Node", "Delete Node"]
+                    }]
+                    DrawContextMenu(views)
+                } else {
+                    // input/output context menu
+                    var views = [{ title: "Wires", views: ["New Wire", "Remove All Wires"] }]
+                    DrawContextMenu(views)
+                }
+            } else {
+                // general context menu
+                var views = [{ title: "Nodes", views: ["Create Empty Node", "Paste Node"] }]
+                DrawContextMenu(views)
             }
         }
-
-        if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
-        if (making_connection) {
-            if (con1.direction == "OUTPUT")
-                con1.connections.push(con2), con2.connections.push(con2)
-            if (con2.direction == "OUTPUT")
-                con2.connections.push(con1), con2.connections.push(con1)
-
-            making_connection = false
-        }
-
-        if (!no_update)
-            UpdateAndDrawNodes()
 
         e.preventDefault()
         e.stopPropagation()
     })
+
+    function DrawContextMenu(views) {
+        // var views = ["New Wire", "Remove All Wires"]
+        var num = views.length
+        views.forEach(v => {
+            num += v.views.length
+        })
+        var calc_height = (num * 18) + 10
+        console.log("NUMBER", num)
+        var height = Math.max(15, calc_height)
+        if (height > 155) height = 155
+        console.log("HEIGHT", height)
+
+        ctx.fillStyle = "rgba(0,0,0,0.15)"
+        ctx.strokeStyle = "rgba(0,0,0,0.15)"
+        roundRect(ctx, Mouse.position.x + 10, Mouse.position.y + 10, 170, height, 5, true, false)
+
+        ctx.fillStyle = "rgba(0,0,0,0.5)"
+        ctx.strokeStyle = "white"
+        roundRect(ctx, Mouse.position.x, Mouse.position.y, 170, height, 5, true, true)
+        var drawScroll = false
+
+        ctx.font = "bold 12px Arial"
+        ctx.fillStyle = "white"
+        ctx.strokeStyle = "white"
+        ctx.textAlign = "left"
+        var i = 0;
+        views.forEach((view) => {
+            var h = 16 + i * 18
+
+            if (view.title) {
+                ctx.fillStyle = "gray"
+                ctx.font = "bold 15px Arial"
+                ctx.fillText(view.title, Mouse.position.x + 6, Mouse.position.y + h + 2)
+                ctx.font = "bold 12px Arial"
+                ctx.fillStyle = "white"
+            }
+
+            console.log(view)
+            i++
+
+            view.views.forEach(element => {
+                h = 16 + i * 18
+                ctx.fillText(element, Mouse.position.x + 6, Mouse.position.y + h)
+                i++
+            })
+
+        })
+    }
 
     canvas.addEventListener('contextmenu', function (e) {
         if (e.button == 2)
