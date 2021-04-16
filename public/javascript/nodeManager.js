@@ -27,7 +27,8 @@ function NMCreateNode(name, description) {
             x: 150,
             y: 25 // base height is 20px
         },
-        zindex: NodeManager.GetNodes().length > 0 ? NodeManager.GetNodes()[0].zindex + 1 : 0
+        zindex: NodeManager.GetNodes().length > 0 ? NodeManager.GetNodes()[0].zindex + 1 : 0,
+        dirty: true
     }
 
     let AddInput = (title, input) => {
@@ -57,6 +58,14 @@ function NMCreateNode(name, description) {
         return node
     }
 
+    let isDirty = () => {
+        return node.dirty
+    }
+
+    let MarkDirty = (dirty) => {
+        node.dirty = dirty
+    }
+
     node.AddInput = AddInput
     node.AddOutput = AddOutput
     node.GetName = GetName
@@ -69,6 +78,8 @@ function NMCreateNode(name, description) {
             node.zindex = front.zindex + 1
         }
     }
+    node.isDirty = isDirty
+    node.MarkDirty = MarkDirty
 
     // NodeManager keeps track of this node.
     nodes.push(node)
