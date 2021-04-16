@@ -493,8 +493,9 @@
                 }
             }
         } else if (Mouse.dragging) {
+            // e.preventDefault()
             // console.log(Mouse.startPosition)
-            if (!e.ctrlKey) {
+            if (!e.ctrlKey && !e.shiftKey) {
                 // dragging selection box
                 const width = Mouse.position.x - Mouse.startPosition.x,
                     height = Mouse.position.y - Mouse.startPosition.y
