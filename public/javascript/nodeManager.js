@@ -214,6 +214,27 @@ function NMCreateArrayOutput() {
     }
 }
 
+function NMCreateObjectInput() {
+
+    return {
+        type: "Object",
+        direction: "INPUT",
+        value: [],
+        default_value: [],
+        connections: []
+    }
+}
+
+function NMCreateObjectOutput() {
+    return {
+        type: "Object",
+        direction: "OUTPUT",
+        value: [],
+        default_value: [],
+        connections: []
+    }
+}
+
 function NMCreateBoolInput(default_value) {
     default_value = default_value || false
 
@@ -264,6 +285,8 @@ window.NodeManager = {
     CreateNumberViewerOutput: NMCreateNumberViewer,
     CreateArrayInput: NMCreateArrayInput,
     CreateArrayOutput: NMCreateArrayOutput,
+    CreateObjectInput: NMCreateObjectInput,
+    CreateObjectOutput: NMCreateObjectOutput,
     CreateBoolInput: NMCreateBoolInput,
     CreateBoolOutput: NMCreateBoolOutput,
     CreateAnyInput: NMCreateAnyInput,
