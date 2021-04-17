@@ -544,7 +544,8 @@
         } else if (Mouse.dragging) {
             // e.preventDefault()
             // console.log(Mouse.startPosition)
-            if (!e.ctrlKey && !e.shiftKey) {
+            if ((e.shiftKey || e.ctrlKey) && !Mouse.selecting) Mouse.slicing = true
+            if ((!Mouse.slicing || Mouse.selecting)) {
                 // dragging selection box
                 const width = Mouse.position.x - Mouse.startPosition.x,
                     height = Mouse.position.y - Mouse.startPosition.y
@@ -559,7 +560,7 @@
 
                 Mouse.selecting = true
                 // console.log("Selecting")
-            } else {
+            } else if (!Mouse.selecting || Mouse.slicing) {
                 // cutting wires
                 UpdateAndDrawNodes()
                 ctx.fillStyle = "rgba(0,255,128,0.1)"
@@ -890,7 +891,7 @@
 
                 console.log("Stop selecting")
 
-                console.log(selected)
+                console.log("SELECTED", selected)
                 Mouse.selected = selected
                 Mouse.selecting = false
             }
