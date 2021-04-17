@@ -357,16 +357,17 @@ Array.prototype.hasKeyValue = function (key, value) {
 
 function IterateUntilFree(title, object) {
     var c = 1
+    var finaltitle = title
     if (typeof object == "object") {
-        while (object.hasOwnProperty(title)) {
-            title = `${title}_${c}`
+        while (object.hasOwnProperty(finaltitle)) {
+            finaltitle = `${title} ${c}`
             c++
         }
     } else if (Array.isArray(object)) {
-        while (object.hasKeyValue("name", title)) {
-            title = `${title}_${c}`
+        while (object.hasKeyValue("name", finaltitle)) {
+            finaltitle = `${title} ${c}`
             c++
         }
     }
-    return title
+    return finaltitle
 }
