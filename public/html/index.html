@@ -576,7 +576,7 @@
     function GetOverlappedNode(point) {
         var target = undefined
 
-        if (Array.isArray(MenuOverlay.collision) && MenuOverlay.collision.length > 0)
+        if (Array.isArray(MenuOverlay.collision) && MenuOverlay.collision.length > 0) {
             MenuOverlay.collision.every(col => {
                 const xbound = Mouse.position.x >= col.x && Mouse.position.x <= col.x + col.width,
                     ybound = Mouse.position.y >= col.y && Mouse.position.y <= col.y + col.height
@@ -591,6 +591,7 @@
 
                 return true
             })
+        }
         else NodeManager.GetNodes().every(node => {
             var t = CheckPointInNode(node, point)
 
@@ -914,9 +915,9 @@
                     // if hovering over a context menu item
                     // console.log(Mouse.target)
                     console.log("CONTEXT MENU")
-                    Mouse.target.function()
+                    if (Mouse.target.hasOwnProperty("function") && typeof Mouse.target.function != "undefined")
+                        Mouse.target.function(), CloseMenuOverlay()
 
-                    CloseMenuOverlay()
                     UpdateAndDrawNodes()
                 } else if (Mouse.target.type == "Selection") {
                     canvas.style.cursor = "auto"
@@ -1175,6 +1176,14 @@
             return true
         })
 
+        // something is wrong with collision detection so I'm disabling this
+        // MenuOverlay.collision.push({
+        //     x: position.x,
+        //     y: position.y,
+        //     width: parent.scale.x * 0.75,
+        //     height: height
+        // })
+
         if (drawScroll) {
             ctx.fillStyle = "rgba(128,128,128,0.25)"
             ctx.strokeStyle = "white"
@@ -1248,7 +1257,14 @@
                 })
                 i++
             })
-
+            // something is wrong with "collision" so I'm disabling this
+            // add "collision" for the context menu so it doesn't close when you click inside the rectangle
+            // MenuOverlay.collision.push({
+            //     x: position.x,
+            //     y: position.y,
+            //     width: 170,
+            //     height: height
+            // })
         })
     }
 
