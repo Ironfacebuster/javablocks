@@ -1,16 +1,20 @@
 function CreateMathNode() {
-    var MathNode = NodeManager.CreateNode("Math Functions", "A node containing various math functions.")
+    var node = NodeManager.CreateNode("Math Functions", "A node containing various math functions.")
 
-    MathNode.default = true
-    MathNode.SetAccent("ffbb00")
+    node.default = true
+    node.SetAccent("ffbb00")
 
-    MathNode.AddInput("Mode", NodeManager.CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
-    var inp_a = MathNode.AddInput("A", NodeManager.CreateNumberInput(0))
-    var inp_b = MathNode.AddInput("B", NodeManager.CreateNumberInput(0))
-    var o = MathNode.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Mode", NodeManager.CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
+    var inp_a = node.AddInput("A", NodeManager.CreateNumberInput(0))
+    var inp_b = node.AddInput("B", NodeManager.CreateNumberInput(0))
+    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
 
-    MathNode.execute = () => {
-        const fun = MathNode.inputs["Mode"].currentView.name
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
+        const fun = node.inputs["Mode"].currentView.name
 
         if (fun == "atan2")
             o.value = Math.atan2(inp_b.value, inp_a.value)
@@ -20,31 +24,36 @@ function CreateMathNode() {
 
         // console.log(o)
 
-        for (var k in MathNode.outputs) {
-            var output = MathNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return MathNode
+    return node
 }
 
 function CreateNumberNode() {
-    var NumberNode = NodeManager.CreateNode("Static Numbers", "A node that contains various static numbers.")
+    var node = NodeManager.CreateNode("Static Numbers", "A node that contains various static numbers.")
 
-    NumberNode.default = true
-    NumberNode.SetAccent("ff6600")
+    node.default = true
+    node.SetAccent("ff6600")
 
-    NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var o = NumberNode.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
 
-    NumberNode.execute = () => {
-        const fun = NumberNode.inputs["Value"].currentView.name
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
+        const fun = node.inputs["Value"].currentView.name
 
         if (Math.hasOwnProperty(fun))
             o.value = Math[fun]
@@ -55,74 +64,88 @@ function CreateNumberNode() {
             }
         }
 
-        for (var k in NumberNode.outputs) {
-            var output = NumberNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return NumberNode
+    return node
 }
 
 function CreateRandomNode() {
-    var NumberNode = NodeManager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
+    var node = NodeManager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
 
-    NumberNode.default = true
-    NumberNode.SetAccent("4444ff")
+    node.default = true
+    node.SetAccent("4444ff")
 
-    // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var o = NumberNode.AddOutput("Output", NodeManager.CreateNumberOutput())
+    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
 
-    NumberNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         o.value = Math.random()
 
-        for (var k in NumberNode.outputs) {
-            var output = NumberNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return NumberNode
+    return node
 }
 
 function CreateViewerNode() {
-    var NumberNode = NodeManager.CreateNode("Value Viewer", "A node that will display a value.")
+    var node = NodeManager.CreateNode("Value Viewer", "A node that will display a value.")
 
-    NumberNode.default = true
-    NumberNode.SetAccent("4488ff")
-    NumberNode.AddInput("Input", NodeManager.CreateAnyInput())
-    NumberNode.AddOutput("Output", NodeManager.CreateNumberViewerOutput())
+    node.default = true
+    node.SetAccent("4488ff")
+    node.AddInput("Input", NodeManager.CreateAnyInput())
+    node.AddOutput("Output", NodeManager.CreateNumberViewerOutput())
 
-    NumberNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
 
     }
 
-    return NumberNode
+    return node
 }
 
 function CreateOperationsNode() {
-    var MathNode = NodeManager.CreateNode("Math Operations", "A node that performs various math operations.")
+    var node = NodeManager.CreateNode("Math Operations", "A node that performs various math operations.")
 
-    MathNode.default = true
-    MathNode.SetAccent("dd00ff")
+    node.default = true
+    node.SetAccent("dd00ff")
 
-    MathNode.AddInput("Mode", NodeManager.CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
-    var inp_a = MathNode.AddInput("A", NodeManager.CreateNumberInput(0))
-    var inp_b = MathNode.AddInput("B", NodeManager.CreateNumberInput(0))
-    var o = MathNode.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Mode", NodeManager.CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
+    var inp_a = node.AddInput("A", NodeManager.CreateNumberInput(0))
+    var inp_b = node.AddInput("B", NodeManager.CreateNumberInput(0))
+    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
 
-    MathNode.execute = () => {
-        const act = MathNode.inputs["Mode"].currentView.name
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
+        const act = node.inputs["Mode"].currentView.name
 
         switch (act) {
             case "Power":
@@ -142,159 +165,186 @@ function CreateOperationsNode() {
                 break
         }
 
-        for (var k in MathNode.outputs) {
-            var output = MathNode.outputs[k]
+
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return MathNode
+    return node
 }
 
 function CreateIfNode() {
-    var IfNode = NodeManager.CreateNode("Comparison", "A node that compares two inputs.")
+    var node = NodeManager.CreateNode("Comparison", "A node that compares two inputs.")
 
-    IfNode.default = true
-    IfNode.SetAccent("ff2200")
+    node.default = true
+    node.SetAccent("ff2200")
 
-    // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in1 = IfNode.AddInput("A", NodeManager.CreateAnyInput())
-    var in2 = IfNode.AddInput("B", NodeManager.CreateAnyInput())
-    var o = IfNode.AddOutput("Output", NodeManager.CreateBoolOutput())
+    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in1 = node.AddInput("A", NodeManager.CreateAnyInput())
+    var in2 = node.AddInput("B", NodeManager.CreateAnyInput())
+    var o = node.AddOutput("Output", NodeManager.CreateBoolOutput())
 
-    IfNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         if (in1.value == in2.value) o.value = true
         else o.value = false
 
-        for (var k in IfNode.outputs) {
-            var output = IfNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return IfNode
+    return node
 }
 
 function CreateSwitchNode() {
-    var SwitchNode = NodeManager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
+    var node = NodeManager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
-    SwitchNode.default = true
-    SwitchNode.SetAccent("ff8888")
+    node.default = true
+    node.SetAccent("ff8888")
 
-    // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in2 = SwitchNode.AddInput("A", NodeManager.CreateAnyInput())
-    var in3 = SwitchNode.AddInput("B", NodeManager.CreateAnyInput())
-    var in1 = SwitchNode.AddInput("Predicate", NodeManager.CreateBoolInput())
-    var o = SwitchNode.AddOutput("Output", NodeManager.CreateAnyOutput())
+    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in2 = node.AddInput("A", NodeManager.CreateAnyInput())
+    var in3 = node.AddInput("B", NodeManager.CreateAnyInput())
+    var in1 = node.AddInput("Predicate", NodeManager.CreateBoolInput())
+    var o = node.AddOutput("Output", NodeManager.CreateAnyOutput())
 
-    SwitchNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         o.value = in1.value == true ? in2.value : in3.value
 
-        for (var k in SwitchNode.outputs) {
-            var output = SwitchNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return SwitchNode
+    return node
 }
 
 function CreateInverterNode() {
-    var IfNode = NodeManager.CreateNode("Bool Inverter", "A node that inverts its input.")
+    var node = NodeManager.CreateNode("Bool Inverter", "A node that inverts its input.")
 
-    IfNode.default = true
-    IfNode.SetAccent("ff6655")
+    node.default = true
+    node.SetAccent("ff6655")
 
-    // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in1 = IfNode.AddInput("Input", NodeManager.CreateBoolInput())
-    var o = IfNode.AddOutput("Output", NodeManager.CreateBoolOutput())
+    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in1 = node.AddInput("Input", NodeManager.CreateBoolInput())
+    var o = node.AddOutput("Output", NodeManager.CreateBoolOutput())
 
-    IfNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         o.value = !in1.value
 
-        for (var k in IfNode.outputs) {
-            var output = IfNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return IfNode
+    return node
 }
 
 function CreateObjectKeyNode() {
-    var OKNode = NodeManager.CreateNode("Object Key", "A node that accesses a key from an object.")
+    var node = NodeManager.CreateNode("Object Key", "A node that accesses a key from an object.")
 
-    OKNode.default = true
-    OKNode.SetAccent("44aaee")
+    node.default = true
+    node.SetAccent("44aaee")
 
-    var in1 = OKNode.AddInput("Input", NodeManager.CreateObjectInput())
+    var in1 = node.AddInput("Input", NodeManager.CreateObjectInput())
     // change this to a user string input
-    var in2 = OKNode.AddInput("Key", NodeManager.CreateSelectionInput())
-    var o = OKNode.AddOutput("Output", NodeManager.CreateAnyOutput())
+    var in2 = node.AddInput("Key", NodeManager.CreateSelectionInput())
+    var o = node.AddOutput("Output", NodeManager.CreateAnyOutput())
 
-    OKNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         o.value = in1.value[in2.value] || "null"
 
-        for (var k in OKNode.outputs) {
-            var output = OKNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                 })
         }
     }
 
-    return OKNode
+    return node
 }
 
 function CreateObjectNode() {
-    var ObjectNode = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")
+    var node = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")
 
-    ObjectNode.default = true
-    ObjectNode.SetAccent("4466ee")
+    node.default = true
+    node.SetAccent("4466ee")
     var obj = {}
 
-    // var in1 = OKNode.AddInput("Input", NodeManager.CreateObjectInput())
+    // var in1 = node.AddInput("Input", NodeManager.CreateObjectInput())
     // change this to a user string input
-    var in1 = ObjectNode.AddInput("Key", NodeManager.CreateSelectionInput())
-    var o = ObjectNode.AddOutput("Output", NodeManager.CreateObjectOutput())
+    var in1 = node.AddInput("Key", NodeManager.CreateSelectionInput())
+    var o = node.AddOutput("Output", NodeManager.CreateObjectOutput())
 
-    ObjectNode.execute = () => {
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
         o.value = obj
 
-        for (var k in ObjectNode.outputs) {
-            var output = ObjectNode.outputs[k]
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
             if (output.connections.length > 0)
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-                    con.parent.execute()
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
                     // eventually wait for execution of connections
                 })
         }
     }
 
-    return ObjectNode
+    return node
 }
