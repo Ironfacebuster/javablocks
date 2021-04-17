@@ -26,6 +26,7 @@ function CreateMathNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -60,6 +61,7 @@ function CreateNumberNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -85,6 +87,7 @@ function CreateRandomNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -145,6 +148,7 @@ function CreateOperationsNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -173,6 +177,7 @@ function CreateIfNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -201,6 +206,7 @@ function CreateSwitchNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -227,6 +233,7 @@ function CreateInverterNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -254,6 +261,7 @@ function CreateObjectKeyNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+                    con.parent.execute()
                 })
         }
     }
@@ -282,7 +290,7 @@ function CreateObjectNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
-
+                    con.parent.execute()
                     // eventually wait for execution of connections
                 })
         }
