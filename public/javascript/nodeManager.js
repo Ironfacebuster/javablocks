@@ -110,6 +110,17 @@ function NMDeleteNode(id) {
 
     if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
 
+    var node = NodeManager.GetNode(id)
+    console.log(node.inputs)
+    // clean up connections
+    Object.keys(node.inputs).forEach((i) => {
+        console.log(i, node.inputs[i])
+        NodeManager.RemoveInputConnections(node.inputs[i])
+    })
+    Object.keys(node.outputs).forEach((o) => {
+        NodeManager.RemoveOutputConnections(node.outputs[o])
+    })
+
     if (index == 0) nodes.shift()
     else if (index == nodes.length - 1) nodes.pop()
     else nodes = nodes.splice(index, 1)
@@ -344,7 +355,11 @@ window.NodeManager = {
         return nodes[nodes.findIndex((node) => {
             return node.id == id
         })]
-    }
+    },
+    RemoveInputConnections: NMRemoveInputConnections,
+    RemoveOutputConnections: NMRemoveOutputConnections,
+    RemoveInputConnection: NMRemoveInputConnection,
+    RemoveOutputConnection: NMRemoveOutputConnection
 }
 
 Array.prototype.hasKeyValue = function (key, value) {
@@ -370,4 +385,52 @@ function IterateUntilFree(title, object) {
         }
     }
     return finaltitle
+}
+
+function NMRemoveInputConnection(input, output) {
+    NMRemoveOutputConnection(output, input)
+}
+
+function NMRemoveInputConnections(input) {
+    // a wrapper for RemoveOutputConnection
+    if (input.connections.length == 0) return
+
+    // inputs can only have one connection, so it's safe to assume index zero will be the the connection
+    var output = input.connections[0]
+
+    NodeManager.RemoveOutputConnection(output, input)
+}
+
+function NMRemoveOutputConnection(output, input) {
+    var index = output.connections.findIndex((c) => {
+        return c.id == input.id
+    })
+    // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
+    if (output.connections.length > 1 && index > 0 && index < output.connections.length - 1)
+        output.connections = output.connections.splice(index - 1, 1)
+    // if the index is zero, shift out the first connection
+    else if (index == 0) output.connections.shift()
+    // if the index is the last item, pop it
+    else if (index == output.connections.length - 1) output.connections.pop()
+    // if this connection is the last in the array, set the array to be empty
+    else if (output.connections.length == 1) output.connections = []
+
+    // since inputs can only have one connection, clear the input's connections
+    input.connections = []
+    // set the end connection's default value
+    input.value = input.default_value
+    // call "execute" if it has it
+    if (input.hasOwnProperty("execute"))
+        input.execute()
+}
+
+function NMRemoveOutputConnections(output) {
+    if (!output.hasOwnProperty("connections") || output.connections.length == 0) return
+
+    output.connections.forEach(c => {
+        console.log(c)
+        c.connections = []
+    })
+
+    output.connections = []
 }
