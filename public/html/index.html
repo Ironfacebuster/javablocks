@@ -959,9 +959,10 @@
             UpdateAndDrawNodes()
             Mouse.target = GetOverlappedNode(Mouse.position)
             if (typeof Mouse.target != "undefined") {
+                let node = Mouse.target.parent || Mouse.target
+                let node_id = node.id
                 // right clicked on something
                 if (Mouse.target.type == "Node") {
-                    let node_id = Mouse.target.id
 
                     // Node context menu
                     // make this context the active MENU
@@ -986,7 +987,23 @@
                                 console.log(node)
                             }
                         }]
-                    }, {
+                    }]
+
+                    if (!node.default) views.push({
+                        title: "Input/Output", views: [{
+                            title: "New Input",
+                            function: () => {
+
+                            }
+                        }, {
+                            title: "New Output",
+                            function: () => {
+
+                            }
+                        }]
+                    })
+
+                    views.push({
                         title: "Nodes",
                         views: [{
                             title: "Duplicate Node",
@@ -999,7 +1016,7 @@
                                 NodeManager.DeleteNode(node_id)
                             }
                         }]
-                    }]
+                    })
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1022,6 +1039,36 @@
                             }
                         }]
                     }]
+
+                    if (!node.default) views.push({
+                        title: "Input/Output", views: [{
+                            title: "Add New",
+                            function: () => {
+
+                            }
+                        }, {
+                            title: "Duplicate This",
+                            function: () => {
+
+                            }
+                        }]
+                    })
+
+                    views.push({
+                        title: "Nodes",
+                        views: [{
+                            title: "Duplicate Node",
+                            function: () => {
+
+                            }
+                        }, {
+                            title: "Delete Node",
+                            function: () => {
+                                NodeManager.DeleteNode(node_id)
+                            }
+                        }]
+                    })
+
                     const pos = {
                         x: Mouse.position.x,
                         y: Mouse.position.y
@@ -1141,7 +1188,7 @@
         var calc_height = (num * 18) + 10
         // console.log("NUMBER", num)
         var height = Math.max(15, calc_height)
-        if (height > 155) height = 155
+        // if (height > 155) height = 155
         // console.log("HEIGHT", height)
 
         ctx.fillStyle = "rgba(0,0,0,0.15)"
