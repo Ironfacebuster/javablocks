@@ -282,6 +282,8 @@ function CreateObjectNode() {
                 output.connections.forEach(con => {
                     // console.log(con)
                     con.value = output.value
+
+                    // eventually wait for execution of connections
                 })
         }
     }

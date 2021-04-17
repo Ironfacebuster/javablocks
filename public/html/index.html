@@ -1154,6 +1154,11 @@
                             n.execute = () => { }
                             n.position = pos
                         }
+                    }, {
+                        title: "Select all nodes",
+                        function: () => {
+                            Mouse.selected = NodeManager.GetNodes()
+                        }
                     }]
                 }]
                 SetMenuOverlay(pos, DrawContextMenu, views)
