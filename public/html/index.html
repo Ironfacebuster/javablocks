@@ -13,6 +13,17 @@
         body {
             padding: 0;
             margin: 0;
+
+            font-family: sans-serif;
+        }
+
+        div {
+            margin-left: 5px;
+            margin-bottom: 15px;
+        }
+
+        div div {
+            margin-bottom: 0px;
         }
 
         canvas {
@@ -24,18 +35,23 @@
 </head>
 
 <body>
-    <!-- <button onclick="addnode()">Add Node</button> -->
-    <button onclick="CreateMathNode()">Add Math Node</button>
-    <button onclick="CreateNumberNode()">Add Number Node</button>
-    <button onclick="CreateOperationsNode()">Add Operations Node</button>
-    <button onclick="CreateRandomNode()">Add Random Node</button>
-    <button onclick="CreateIfNode()">Add Comparison Node</button>
-    <button onclick="CreateInverterNode()">Add Inverter Node</button>
-    <button onclick="CreateViewerNode()">Add Viewer Node</button>
-    <button onclick="CreateObjectNode()">Add WIP Object Node</button>
-    <button onclick="CreateObjectKeyNode()">Add WIP Object Key Node</button>
-    <button onclick="CreateSwitchNode()">Add Predicate Switch Node</button>
-    <!-- CreateSwitchNode -->
+    <div>
+        <div>Settings</div>
+        <button onclick="ToggleRenderMode()" id="quality_button">Quality Mode</button>
+    </div>
+    <div>
+        <div>Node Drawer</div>
+        <button onclick="CreateMathNode()">Add Math Node</button>
+        <button onclick="CreateNumberNode()">Add Number Node</button>
+        <button onclick="CreateOperationsNode()">Add Operations Node</button>
+        <button onclick="CreateRandomNode()">Add Random Node</button>
+        <button onclick="CreateIfNode()">Add Comparison Node</button>
+        <button onclick="CreateInverterNode()">Add Inverter Node</button>
+        <button onclick="CreateViewerNode()">Add Viewer Node</button>
+        <button onclick="CreateObjectNode()">Add WIP Object Node</button>
+        <button onclick="CreateObjectKeyNode()">Add WIP Object Key Node</button>
+        <button onclick="CreateSwitchNode()">Add Predicate Switch Node</button>
+    </div>
 
     <canvas id="main">
 
@@ -64,6 +80,14 @@
 
     var startX = 25,
         startY = 25
+
+    function ToggleRenderMode() {
+        fast_mode = !fast_mode
+
+        document.getElementById("quality_button").innerText = fast_mode ? "Performance Mode" : "Quality Mode"
+
+        UpdateAndDrawNodes()
+    }
 
     function addnode() {
         // var d = document.getElementById("nodes")
@@ -121,9 +145,11 @@
         scale.y += (Math.max(Object.keys(node.inputs).length, Object.keys(node.outputs).length) * 25)
 
         // draw shadow
-        ctx.fillStyle = "rgba(0,0,0,0.15)"
-        ctx.strokeStyle = "rgba(0,0,0,0.15)"
-        roundRect(ctx, position.x + 5, position.y + 5, scale.x, scale.y, 5, true, false)
+        if (!fast_mode) {
+            ctx.fillStyle = "rgba(0,0,0,0.15)"
+            ctx.strokeStyle = "rgba(0,0,0,0.15)"
+            roundRect(ctx, position.x + 5, position.y + 5, scale.x, scale.y, 5, true, false)
+        }
 
         // draw outside w/ accent
         var acc = HexToRGB(node.accent)
@@ -367,7 +393,7 @@
             ctx.bezierCurveTo(mid.x, mid.y, c_point2.x, c_point2.y, dest.x, dest.y)
             ctx.stroke()
 
-            if (shadow) {
+            if (shadow && !fast_mode) {
                 ctx.strokeStyle = "rgba(0,0,0,0.15)"
                 ctx.beginPath()
                 ctx.moveTo(source.x + 5, source.y + 5)
@@ -527,9 +553,11 @@
 
                 // only draw point if following the mouse
                 if (endpoint == Mouse.position) {
-                    ctx.fillStyle = "rgba(0,0,0,0.15)"
-                    ctx.strokeStyle = "rgba(0,0,0,0.15)"
-                    circle(ctx, endpoint.x + 5, endpoint.y + 5, 5, true, true)
+                    if (!fast_mode) {
+                        ctx.fillStyle = "rgba(0,0,0,0.15)"
+                        ctx.strokeStyle = "rgba(0,0,0,0.15)"
+                        circle(ctx, endpoint.x + 5, endpoint.y + 5, 5, true, true)
+                    }
 
                     ctx.lineWidth = 2
                     const color = GetColorByType(Mouse.target.type)
@@ -695,14 +723,14 @@
                     var minY = y - 10
                     var maxY = y + 8
                     var minX = pos.x + 10
-                    var width = scale.x / 2 - 10
+                    var width = scale.x / 2
                     var maxX = pos.x + width
 
                     if (draw_collision)
                         DrawCollision({
                             x: pos.x + 10,
                             y: minY + 2,
-                            width: width,
+                            width: width - 10,
                             height: 16
                         })
                     // console.log(y)
@@ -860,40 +888,51 @@
 
                             if (output.connections && output.connections.length > 0)
                                 output.connections.forEach((c) => {
-                                    var mid = {
-                                        x: (output.position.x + c.position.x) / 2,
-                                        y: (output.position.y + c.position.y) / 2
-                                    }
+                                    if (!fast_mode) {
+                                        var mid = {
+                                            x: (output.position.x + c.position.x) / 2,
+                                            y: (output.position.y + c.position.y) / 2
+                                        }
 
-                                    var c_point1 = {
-                                        x: (mid.x + output.position.x) / 2,
-                                        y: output.position.y
-                                    }
+                                        var c_point1 = {
+                                            x: (mid.x + output.position.x) / 2,
+                                            y: output.position.y
+                                        }
 
-                                    var c_point2 = {
-                                        x: (mid.x + c.position.x) / 2,
-                                        y: c.position.y
-                                    }
+                                        var c_point2 = {
+                                            x: (mid.x + c.position.x) / 2,
+                                            y: c.position.y
+                                        }
 
-                                    for (var i = 0; i <= 64; i += 2) {
-                                        const t = i / 64,
-                                            t2 = (i + 2) / 64
+                                        for (var i = 0; i <= 64; i += 2) {
+                                            const t = i / 64,
+                                                t2 = (i + 2) / 64
 
-                                        let p1 = CalculateBezier(t, output.position, c_point1, mid),
-                                            p2 = CalculateBezier(t2, output.position, c_point1, mid)
+                                            let p1 = CalculateBezier(t, output.position, c_point1, mid),
+                                                p2 = CalculateBezier(t2, output.position, c_point1, mid)
 
-                                        let p3 = CalculateBezier(t, mid, c_point2, c.position),
-                                            p4 = CalculateBezier(t2, mid, c_point2, c.position)
+                                            let p3 = CalculateBezier(t, mid, c_point2, c.position),
+                                                p4 = CalculateBezier(t2, mid, c_point2, c.position)
 
-                                        if (Intersecting(Mouse.startPosition, Mouse.position, p1, p2) || Intersecting(Mouse.startPosition, Mouse.position, p3, p4)) {
+                                            if (Intersecting(Mouse.startPosition, Mouse.position, p1, p2) || Intersecting(Mouse.startPosition, Mouse.position, p3, p4)) {
+                                                console.log("INTERSECTION!")
+                                                sliced_connections.push({
+                                                    base: output,
+                                                    connection: c
+                                                })
+                                                break
+                                            }
+                                        }
+                                    } else {
+                                        if (Intersecting(Mouse.startPosition, Mouse.position, output.position, c.position)) {
                                             console.log("INTERSECTION!")
                                             sliced_connections.push({
                                                 base: output,
                                                 connection: c
                                             })
-                                            break
                                         }
                                     }
+
                                 })
                         })
                 })
@@ -1260,9 +1299,11 @@
 
         MenuOverlay.scrollHeight = Math.min(0, Math.max(-end_height + (9 * 15 + 5), MenuOverlay.scrollHeight))
 
-        ctx.fillStyle = "rgba(0,0,0,0.15)"
-        ctx.strokeStyle = "rgba(0,0,0,0.15)"
-        roundRect(ctx, position.x + 20, position.y + 16, parent.scale.x * 0.75, height, 5, true, false)
+        if (!fast_mode) {
+            ctx.fillStyle = "rgba(0,0,0,0.15)"
+            ctx.strokeStyle = "rgba(0,0,0,0.15)"
+            roundRect(ctx, position.x + 20, position.y + 16, parent.scale.x * 0.75, height, 5, true, false)
+        }
 
         ctx.strokeStyle = "white"
         ctx.fillStyle = "rgba(0,0,0,0.5)"
@@ -1329,9 +1370,11 @@
         // if (height > 155) height = 155
         // console.log("HEIGHT", height)
 
-        ctx.fillStyle = "rgba(0,0,0,0.15)"
-        ctx.strokeStyle = "rgba(0,0,0,0.15)"
-        roundRect(ctx, position.x + 10, position.y + 10, 170, height, 5, true, false)
+        if (!fast_mode) {
+            ctx.fillStyle = "rgba(0,0,0,0.15)"
+            ctx.strokeStyle = "rgba(0,0,0,0.15)"
+            roundRect(ctx, position.x + 10, position.y + 10, 170, height, 5, true, false)
+        }
 
         ctx.fillStyle = "rgba(0,0,0,0.5)"
         ctx.strokeStyle = "white"
