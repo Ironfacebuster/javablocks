@@ -198,3 +198,58 @@ function CreateInverterNode() {
 
     return IfNode
 }
+
+function CreateObjectKeyNode() {
+    var OKNode = NodeManager.CreateNode("Object Key", "A node that accesses a key from an object.")
+
+    OKNode.SetAccent("44aaee")
+
+    var in1 = OKNode.AddInput("Input", NodeManager.CreateObjectInput())
+    // change this to a user string input
+    var in2 = OKNode.AddInput("Key", NodeManager.CreateSelectionInput())
+    var o = OKNode.AddOutput("Output", NodeManager.CreateAnyOutput())
+
+    OKNode.execute = () => {
+        o.value = in1.value[in2.value] || "null"
+
+        for (var k in OKNode.outputs) {
+            var output = OKNode.outputs[k]
+            if (output.connections.length > 0)
+                output.connections.forEach(con => {
+                    // console.log(con)
+                    con.value = output.value
+                })
+        }
+    }
+
+    return OKNode
+}
+
+// 4466ee
+
+function CreateObjectNode() {
+    var ObjectNode = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")
+
+    ObjectNode.SetAccent("4466ee")
+    var obj = {}
+
+    // var in1 = OKNode.AddInput("Input", NodeManager.CreateObjectInput())
+    // change this to a user string input
+    var in1 = ObjectNode.AddInput("Key", NodeManager.CreateSelectionInput())
+    var o = ObjectNode.AddOutput("Output", NodeManager.CreateObjectOutput())
+
+    ObjectNode.execute = () => {
+        o.value = obj
+
+        for (var k in ObjectNode.outputs) {
+            var output = ObjectNode.outputs[k]
+            if (output.connections.length > 0)
+                output.connections.forEach(con => {
+                    // console.log(con)
+                    con.value = output.value
+                })
+        }
+    }
+
+    return ObjectNode
+}
