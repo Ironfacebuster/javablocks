@@ -1,6 +1,7 @@
 function CreateMathNode() {
     var MathNode = NodeManager.CreateNode("Math Functions", "A node containing various math functions.")
 
+    MathNode.default = true
     MathNode.SetAccent("ffbb00")
 
     MathNode.AddInput("Mode", NodeManager.CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
@@ -35,6 +36,7 @@ function CreateMathNode() {
 function CreateNumberNode() {
     var NumberNode = NodeManager.CreateNode("Static Numbers", "A node that contains various static numbers.")
 
+    NumberNode.default = true
     NumberNode.SetAccent("ff6600")
 
     NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -68,6 +70,7 @@ function CreateNumberNode() {
 function CreateRandomNode() {
     var NumberNode = NodeManager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
 
+    NumberNode.default = true
     NumberNode.SetAccent("4444ff")
 
     // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -92,6 +95,7 @@ function CreateRandomNode() {
 function CreateViewerNode() {
     var NumberNode = NodeManager.CreateNode("Value Viewer", "A node that will display a value.")
 
+    NumberNode.default = true
     NumberNode.SetAccent("4488ff")
     NumberNode.AddInput("Input", NodeManager.CreateAnyInput())
     NumberNode.AddOutput("Output", NodeManager.CreateNumberViewerOutput())
@@ -106,6 +110,7 @@ function CreateViewerNode() {
 function CreateOperationsNode() {
     var MathNode = NodeManager.CreateNode("Math Operations", "A node that performs various math operations.")
 
+    MathNode.default = true
     MathNode.SetAccent("dd00ff")
 
     MathNode.AddInput("Mode", NodeManager.CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
@@ -150,6 +155,7 @@ function CreateOperationsNode() {
 function CreateIfNode() {
     var IfNode = NodeManager.CreateNode("Comparison", "A node that compares two inputs.")
 
+    IfNode.default = true
     IfNode.SetAccent("ff2200")
 
     // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -177,6 +183,7 @@ function CreateIfNode() {
 function CreateSwitchNode() {
     var SwitchNode = NodeManager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
+    SwitchNode.default = true
     SwitchNode.SetAccent("ff8888")
 
     // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -204,6 +211,7 @@ function CreateSwitchNode() {
 function CreateInverterNode() {
     var IfNode = NodeManager.CreateNode("Bool Inverter", "A node that inverts its input.")
 
+    IfNode.default = true
     IfNode.SetAccent("ff6655")
 
     // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -229,6 +237,7 @@ function CreateInverterNode() {
 function CreateObjectKeyNode() {
     var OKNode = NodeManager.CreateNode("Object Key", "A node that accesses a key from an object.")
 
+    OKNode.default = true
     OKNode.SetAccent("44aaee")
 
     var in1 = OKNode.AddInput("Input", NodeManager.CreateObjectInput())
@@ -255,6 +264,7 @@ function CreateObjectKeyNode() {
 function CreateObjectNode() {
     var ObjectNode = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")
 
+    ObjectNode.default = true
     ObjectNode.SetAccent("4466ee")
     var obj = {}
 
