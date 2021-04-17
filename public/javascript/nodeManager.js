@@ -87,6 +87,18 @@ function NMCreateNode(name, description) {
     return node
 }
 
+function NMDeleteNode(id) {
+    var index = nodes.findIndex((n) => { return n.id == id })
+
+    if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
+
+    if (index == 0) nodes.shift()
+    else if (index == nodes.length - 1) nodes.pop()
+    else nodes = nodes.splice(index, 1)
+
+    console.log(`Deleted node (id ${id})`)
+}
+
 function NMCreateSelectionInput(views) {
     var data = {
         type: "Selection",
@@ -290,6 +302,7 @@ function NMCreateAnyOutput() {
 
 window.NodeManager = {
     CreateNode: NMCreateNode,
+    DeleteNode: NMDeleteNode,
     CreateSelectionInput: NMCreateSelectionInput,
     CreateNumberInput: NMCreateNumberInput,
     CreateNumberOutput: NMCreateNumberOutput,
@@ -308,6 +321,9 @@ window.NodeManager = {
             return b.zindex - a.zindex
         })
         return nodes
+    },
+    GetNode: (id) => {
+        return nodes[nodes.findIndex((node) => { return node.id == id })]
     }
 }
 
