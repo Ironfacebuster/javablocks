@@ -174,6 +174,33 @@ function CreateIfNode() {
     return IfNode
 }
 
+function CreateSwitchNode() {
+    var SwitchNode = NodeManager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
+
+    SwitchNode.SetAccent("ff8888")
+
+    // NumberNode.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in2 = SwitchNode.AddInput("A", NodeManager.CreateAnyInput())
+    var in3 = SwitchNode.AddInput("B", NodeManager.CreateAnyInput())
+    var in1 = SwitchNode.AddInput("Predicate", NodeManager.CreateBoolInput())
+    var o = SwitchNode.AddOutput("Output", NodeManager.CreateAnyOutput())
+
+    SwitchNode.execute = () => {
+        o.value = in1.value == true ? in2.value : in3.value
+
+        for (var k in SwitchNode.outputs) {
+            var output = SwitchNode.outputs[k]
+            if (output.connections.length > 0)
+                output.connections.forEach(con => {
+                    // console.log(con)
+                    con.value = output.value
+                })
+        }
+    }
+
+    return SwitchNode
+}
+
 function CreateInverterNode() {
     var IfNode = NodeManager.CreateNode("Bool Inverter", "A node that inverts its input.")
 
@@ -224,8 +251,6 @@ function CreateObjectKeyNode() {
 
     return OKNode
 }
-
-// 4466ee
 
 function CreateObjectNode() {
     var ObjectNode = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")

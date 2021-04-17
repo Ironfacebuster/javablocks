@@ -34,6 +34,8 @@
     <button onclick="CreateViewerNode()">Add Viewer Node</button>
     <button onclick="CreateObjectNode()">Add WIP Object Node</button>
     <button onclick="CreateObjectKeyNode()">Add WIP Object Key Node</button>
+    <button onclick="CreateSwitchNode()">Add Predicate Switch Node</button>
+    <!-- CreateSwitchNode -->
 
     <canvas id="main">
 
@@ -900,17 +902,6 @@
                 if (Mouse.target.type == "Node") {
                     CloseMenuOverlay()
                     ClearMouseSelection()
-                    // var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
-                    // if (magnitude == 0) Mouse.target.position.velocity = {
-                    //     x: 0,
-                    //     y: 0,
-                    //     magnitude: 0
-                    // }
-                    // else Mouse.target.position.velocity = {
-                    //     x: Mouse.velocity.x / magnitude,
-                    //     y: Mouse.velocity.y / magnitude,
-                    //     magnitude: magnitude
-                    // }
                 } else if (Mouse.target.type == "Selection") {
                     canvas.style.cursor = "auto"
                     UpdateAndDrawNodes()
@@ -926,7 +917,6 @@
                         views: Mouse.target.views,
                         parent: Mouse.target.parent
                     })
-
                 }
             } else {
                 // ClearMouseSelection()
@@ -968,7 +958,6 @@
                         y: Mouse.position.y
                     }
                     SetMenuOverlay(pos, DrawContextMenu, views)
-                    // SetMenuOverlay(() => { DrawContextMenu(views, pos) })
                 } else {
                     // input/output context menu
                     // make this context the active MENU
