@@ -40,6 +40,11 @@
         <button onclick="ToggleRenderMode()" id="quality_button">Quality Mode</button>
     </div>
     <div>
+        <div>Control</div>
+        <button onclick="TogglePause()" id="pause_button">Pause</button>
+        <button onclick="SetStep()">Step</button>
+    </div>
+    <div>
         <div>Node Drawer</div>
         <button onclick="CreateMathNode()">Add Math Node</button>
         <button onclick="CreateNumberNode()">Add Number Node</button>
@@ -81,12 +86,26 @@
     var startX = 25,
         startY = 25
 
+    var pause_execution = false
+    var step = false
+
     function ToggleRenderMode() {
         fast_mode = !fast_mode
 
         document.getElementById("quality_button").innerText = fast_mode ? "Performance Mode" : "Quality Mode"
 
         UpdateAndDrawNodes()
+    }
+
+    function TogglePause() {
+        pause_execution = !pause_execution
+
+        document.getElementById("pause_button").innerText = pause_execution ? "Unpause" : "Pause"
+        UpdateAndDrawNodes()
+    }
+
+    function SetStep() {
+        step = true
     }
 
     function addnode() {
@@ -1566,6 +1585,13 @@
     // check for nodes that can be activated
     setInterval(() => {
         var redraw_nodes = false
+
+        console.log()
+
+        if (step && !pause_execution) TogglePause(), step = false
+        if (step && pause_execution) TogglePause()
+        if (pause_execution) return
+
         NodeManager.GetNodes().forEach(node => {
             // sum all non selection inputs
             var inputs = 0, outputs = 0
