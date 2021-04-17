@@ -111,7 +111,7 @@ function NMDeleteNode(id) {
     if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
 
     var node = NodeManager.GetNode(id)
-    console.log(node.inputs)
+    console.log(nodes)
     // clean up connections
     Object.keys(node.inputs).forEach((i) => {
         console.log(i, node.inputs[i])
@@ -121,9 +121,13 @@ function NMDeleteNode(id) {
         NodeManager.RemoveOutputConnections(node.outputs[o])
     })
 
+    console.log(index, nodes.length - 1)
+
     if (index == 0) nodes.shift()
     else if (index == nodes.length - 1) nodes.pop()
-    else nodes = nodes.splice(index, 1)
+    else nodes.splice(index, 1)
+
+    console.log(nodes)
 
     console.log(`Deleted node (id ${id})`)
 }
@@ -155,7 +159,7 @@ function NMCreateSelectionInput(views) {
         // search for the view by name
         data.views.every((v, i) => {
             if (v.name == name) {
-                data.views = data.views.splice(i, 1)
+                data.views.splice(i, 1)
                 return false
             }
             return true
@@ -407,7 +411,7 @@ function NMRemoveOutputConnection(output, input) {
     })
     // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
     if (output.connections.length > 1 && index > 0 && index < output.connections.length - 1)
-        output.connections = output.connections.splice(index - 1, 1)
+        output.connections.splice(index, 1)
     // if the index is zero, shift out the first connection
     else if (index == 0) output.connections.shift()
     // if the index is the last item, pop it
