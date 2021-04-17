@@ -32,6 +32,8 @@
     <button onclick="CreateIfNode()">Add Comparison Node</button>
     <button onclick="CreateInverterNode()">Add Inverter Node</button>
     <button onclick="CreateViewerNode()">Add Viewer Node</button>
+    <button onclick="CreateObjectNode()">Add WIP Object Node</button>
+    <button onclick="CreateObjectKeyNode()">Add WIP Object Key Node</button>
 
     <canvas id="main">
 
@@ -304,6 +306,16 @@
                     fill: "white",
                     stroke: "#ff6600"
                     // stroke: "#005588"
+                }
+            case "Array":
+                return {
+                    fill: "white",
+                    stroke: "#eeee44"
+                }
+            case "Object":
+                return {
+                    fill: "white",
+                    stroke: "#44eeee"
                 }
             default:
                 return {
@@ -804,9 +816,9 @@
                                         y: c.position.y
                                     }
 
-                                    for (var i = 0; i <= 100; i += 4) {
-                                        const t = i / 100,
-                                            t2 = (i + 4) / 100
+                                    for (var i = 0; i <= 128; i += 4) {
+                                        const t = i / 128,
+                                            t2 = (i + 4) / 128
 
                                         const point1 = CalculateBezier(t, c_point1, mid, c_point2),
                                             point2 = CalculateBezier(t2, c_point1, mid, c_point2)
