@@ -166,6 +166,7 @@ function NMCreateNumberInput(default_value) {
     default_value = default_value || 0
 
     return {
+        id: GenerateID(16),
         type: "Number",
         direction: "INPUT",
         value: default_value,
@@ -176,6 +177,7 @@ function NMCreateNumberInput(default_value) {
 
 function NMCreateNumberOutput() {
     return {
+        id: GenerateID(16),
         type: "Number",
         direction: "OUTPUT",
         value: 0,
@@ -186,6 +188,7 @@ function NMCreateNumberOutput() {
 
 function NMCreateNumberViewer() {
     return {
+        id: GenerateID(16),
         type: "Viewer",
         direction: "OUTPUT",
         value: 0,
@@ -196,6 +199,7 @@ function NMCreateNumberViewer() {
 function NMCreateArrayInput() {
 
     return {
+        id: GenerateID(16),
         type: "Array",
         direction: "INPUT",
         value: [],
@@ -206,6 +210,7 @@ function NMCreateArrayInput() {
 
 function NMCreateArrayOutput() {
     return {
+        id: GenerateID(16),
         type: "Array",
         direction: "OUTPUT",
         value: [],
@@ -217,6 +222,7 @@ function NMCreateArrayOutput() {
 function NMCreateObjectInput() {
 
     return {
+        id: GenerateID(16),
         type: "Object",
         direction: "INPUT",
         value: [],
@@ -227,6 +233,7 @@ function NMCreateObjectInput() {
 
 function NMCreateObjectOutput() {
     return {
+        id: GenerateID(16),
         type: "Object",
         direction: "OUTPUT",
         value: [],
@@ -239,6 +246,7 @@ function NMCreateBoolInput(default_value) {
     default_value = default_value || false
 
     return {
+        id: GenerateID(16),
         type: "Boolean",
         direction: "INPUT",
         value: default_value,
@@ -249,6 +257,7 @@ function NMCreateBoolInput(default_value) {
 
 function NMCreateBoolOutput() {
     return {
+        id: GenerateID(16),
         type: "Boolean",
         direction: "OUTPUT",
         value: false,
@@ -259,6 +268,7 @@ function NMCreateBoolOutput() {
 
 function NMCreateAnyInput() {
     return {
+        id: GenerateID(16),
         type: "Any",
         direction: "INPUT",
         value: "null",
@@ -269,6 +279,7 @@ function NMCreateAnyInput() {
 
 function NMCreateAnyOutput() {
     return {
+        id: GenerateID(16),
         type: "Any",
         direction: "OUTPUT",
         value: "null",
