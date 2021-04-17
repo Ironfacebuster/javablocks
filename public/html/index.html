@@ -979,6 +979,22 @@
                         views: []
                     }
 
+                    if (!node.default) views.push({
+                        title: "Input/Output", views: [{
+                            title: "New input",
+                            function: () => {
+                                var n_node = NodeManager.GetNode(node_id)
+                                n_node.AddInput("Input", NodeManager.CreateAnyInput())
+                            }
+                        }, {
+                            title: "New output",
+                            function: () => {
+                                var n_node = NodeManager.GetNode(node_id)
+                                console.log(n_node)
+                                n_node.AddOutput("Output", NodeManager.CreateAnyOutput())
+                            }
+                        }]
+                    })
 
                     if (has_inputs) wires.views.push({
                         title: "Remove input wires",
@@ -1003,20 +1019,6 @@
                     })
                     if (has_inputs || has_outputs) views.push(wires)
 
-                    if (!node.default) views.push({
-                        title: "Input/Output", views: [{
-                            title: "New input",
-                            function: () => {
-
-                            }
-                        }, {
-                            title: "New output",
-                            function: () => {
-
-                            }
-                        }]
-                    })
-
                     views.push({
                         title: "Nodes",
                         views: [{
@@ -1040,7 +1042,39 @@
                 } else {
                     // input/output context menu
                     // make this context the active MENU
-                    var views = [{
+                    var views = []
+
+                    // preserve the target for functions
+                    const target = Mouse.target
+
+                    if (!node.default) views.push({
+                        title: "Input/Output", views: [{
+                            title: `New ${target.direction.toLowerCase()}`,
+                            function: () => {
+                                var n_node = NodeManager.GetNode(node_id)
+                                if (target.direction == "INPUT") n_node.AddInput("Input", NodeManager.CreateAnyInput())
+                                else n_node.AddOutput("Output", NodeManager.CreateAnyOutput())
+                            }
+                        }, {
+                            title: "Duplicate this",
+                            function: () => {
+                                var n_node = NodeManager.GetNode(node_id)
+                                const dir = target.direction.toLowerCase() + "s"
+
+                                var name = target.direction.toLowerCase()
+                                // hacky way, but I need to to get the name somehow
+                                Object.keys(n_node[dir]).every(key => {
+                                    if (n_node[dir][key].id == target.id) return false, name = key
+                                    return true
+                                })
+
+                                if (target.direction == "INPUT") n_node.AddInput(name, NodeManager.CreateAnyInput())
+                                else n_node.AddOutput(name, NodeManager.CreateAnyOutput())
+                            }
+                        }]
+                    })
+
+                    views.push({
                         title: "Wires", views: [{
                             title: "New Wire",
                             function: () => {
@@ -1048,20 +1082,6 @@
                             }
                         }, {
                             title: "Detach All Wires",
-                            function: () => {
-
-                            }
-                        }]
-                    }]
-
-                    if (!node.default) views.push({
-                        title: "Input/Output", views: [{
-                            title: "Add new",
-                            function: () => {
-
-                            }
-                        }, {
-                            title: "Duplicate this",
                             function: () => {
 
                             }
