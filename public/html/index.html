@@ -798,8 +798,7 @@
                             var output = node.outputs[o]
 
                             if (output.connections && output.connections.length > 0)
-                                output.connections.forEach((c, index) => {
-                                    // console.log("CON", c)
+                                output.connections.forEach((c) => {
                                     var mid = {
                                         x: (output.position.x + c.position.x) / 2,
                                         y: (output.position.y + c.position.y) / 2
@@ -829,8 +828,7 @@
                                             console.log("INTERSECTION!")
                                             sliced_connections.push({
                                                 base: output,
-                                                connection: c,
-                                                index: index
+                                                connection: c
                                             })
                                             break
                                         }
@@ -842,17 +840,25 @@
                 console.log("SLICED", sliced_connections)
 
                 sliced_connections.forEach(con => {
-                    console.log(con)
+                    var index = con.base.connections.findIndex((c) => { return c.id == con.connection.id })
+
+                    // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
+                    if (con.base.connections.length > 1 && index > 0 && index < con.base.connections.length - 1)
+                        con.base.connections = con.base.connections.splice(index - 1, 1)
+                    // if the index is zero, shift out the first connection
+                    else if (index == 0) con.base.connections.shift()
+                    // if the index is the last item, pop it
+                    else if (index == con.base.connections.length - 1) con.base.connections.pop()
+                    // if this connection is the last in the array, set the array to be empty
+                    else if (con.base.connections.length == 1) con.base.connections = []
+
                     // since inputs can only have one connection, clear the input's connections
                     con.connection.connections = []
+                    // set the end connection's default value
                     con.connection.value = con.connection.default_value
+                    // call "execute" if it has it
                     if (con.connection.hasOwnProperty("execute"))
                         con.connection.execute()
-                    if (con.base.connections.length > 1 && con.index > 0 && con.index < con.base.connections.length - 1)
-                        con.base.connections = con.base.connections.splice(con.index - 1, 1)
-                    else if (con.index == 0) con.base.connections.shift()
-                    else if (con.index == con.base.connections.length - 1) con.base.connections.pop()
-                    else if (con.base.connections.length == 1) con.base.connections = []
                 })
 
                 UpdateAndDrawNodes()
@@ -882,8 +888,11 @@
                     var minY = node.position.y,
                         maxY = node.position.y + node.scale.y
 
+                    // check if the far corners are within the selection bounds
                     var xInBounds = (minX >= bounds.x.min && minX <= bounds.x.max) || (maxX >= bounds.x.min && maxX <= bounds.x.max)
                     var yInBounds = (minY >= bounds.y.min && minY <= bounds.y.max) || (maxY >= bounds.y.min && maxY <= bounds.y.max)
+                    // maybe add a "side" check too?
+                    // if maxY and minY are out of bounds, but maxX or minX are in bounds, this means a side is in the selection box
 
                     inSelection = xInBounds && yInBounds
 
@@ -904,7 +913,7 @@
                 } else if (Mouse.target.type == "Selection") {
                     canvas.style.cursor = "auto"
                     UpdateAndDrawNodes()
-                    no_update = true
+                    // no_update = true
 
                     // open the selection dropdown
                     // make this selection the active MENU
@@ -924,6 +933,7 @@
 
             if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
             if (making_connection) {
+                // complete the connections
                 if (con1.direction == "OUTPUT" && con2.connections.length == 0)
                     con1.connections.push(con2), con2.connections.push(con2)
                 else if (con2.direction == "OUTPUT" && con1.connections.length == 0)
@@ -951,7 +961,7 @@
                         title: "Nodes",
                         views: ["Duplicate Node", "Delete Node"]
                     }]
-                    // DrawContextMenu(views)
+
                     const pos = {
                         x: Mouse.position.x,
                         y: Mouse.position.y
@@ -979,11 +989,13 @@
             }
         }
 
+        // prevent default right click actions
         e.preventDefault()
         e.stopPropagation()
     })
 
     function SetMenuOverlay(position, funct, data) {
+        // set the rendering function to use when drawing this menu
         MenuOverlay.funct = () => { funct(data, position) }
         MenuOverlay.active = true
         UpdateAndDrawNodes()
@@ -1198,32 +1210,43 @@
     }
     */
 
+    // prevent default canvas context menu
     canvas.addEventListener('contextmenu', function (e) {
         if (e.button == 2)
             e.preventDefault()
     })
 
+    // reinit canvas if the window gets resized
+    // (recolor the background, basically)
     window.addEventListener("resize", () => {
         InitCanvas()
     })
 
+    // check for nodes that can be activated
     setInterval(() => {
+        var redraw_nodes = false
         NodeManager.GetNodes().forEach(node => {
             // sum all non selection inputs
             var inputs = 0, outputs = 0
             Object.keys(node.inputs).forEach(l => {
                 if (node.inputs[l].type != "Selection") inputs++
             })
+            // sum all outputs
             Object.keys(node.outputs).forEach(l => {
                 if (node.outputs[l].hasOwnProperty("connections"))
                     outputs += node.outputs[l].connections.length
             })
+
+            // if this node has zero inputs, but some outputs
+            // OR if this node has any inputs and outputs
             if ((inputs == 0 && outputs > 0) || outputs > 0) {
                 node.execute()
-
-                if (!Mouse.dragging) UpdateAndDrawNodes()
+                redraw_nodes = true
             }
         })
+
+        // If the mouse isn't doing something
+        if (redraw_nodes && (!Mouse.dragging && !Mouse.selecting && !Mouse.slicing)) UpdateAndDrawNodes()
     }, 16)
 
     InitCanvas()
