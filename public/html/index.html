@@ -1174,6 +1174,15 @@
                                     return true
                                 })
 
+                                switch (target.direction) {
+                                    case "INPUT":
+                                        NodeManager.RemoveInputConnections(n_node[dir][name])
+                                        break
+                                    case "OUTPUT":
+                                        NodeManager.RemoveOutputConnections(n_node[dir][name])
+                                        break
+                                }
+
                                 delete (n_node[dir][name])
                             }
                         }]
