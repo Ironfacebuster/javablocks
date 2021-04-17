@@ -1082,21 +1082,31 @@
                         title: "Detach input wires",
                         function: () => {
                             var node = NodeManager.GetNode(node_id)
-                            console.log(node)
+                            Object.keys(node.inputs).forEach(i => {
+                                NodeManager.RemoveInputConnections(node.inputs[i])
+                            })
                         }
                     })
                     if (has_outputs) wires.views.push({
                         title: "Detach output wires",
                         function: () => {
                             var node = NodeManager.GetNode(node_id)
-                            console.log(node)
+                            Object.keys(node.outputs).forEach(o => {
+                                NodeManager.RemoveInputConnections(node.outputs[o])
+                            })
                         }
                     })
                     if (has_inputs && has_outputs) wires.views.push({
                         title: "Detach all wires",
                         function: () => {
                             var node = NodeManager.GetNode(node_id)
-                            console.log(node)
+                            Object.keys(node.inputs).forEach(i => {
+                                NodeManager.RemoveInputConnections(node.inputs[i])
+                            })
+                            Object.keys(node.outputs).forEach(o => {
+                                NodeManager.RemoveInputConnections(node.outputs[o])
+                            })
+                            // console.log(node)
                         }
                     })
                     if (has_inputs || has_outputs) views.push(wires)
@@ -1163,7 +1173,6 @@
                         }, {
                             title: "Delete this",
                             function: () => {
-                                // TODO: add a more elegant way of deleting input/outputs (clean up connections)
                                 var n_node = NodeManager.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
@@ -1197,7 +1206,25 @@
                         }, {
                             title: "Detach All Wires",
                             function: () => {
+                                var n_node = NodeManager.GetNode(node_id)
+                                const dir = target.direction.toLowerCase() + "s"
 
+                                var name = target.direction.toLowerCase()
+                                // hacky way, but I need to to get the name somehow
+                                Object.keys(n_node[dir]).every(key => {
+                                    if (n_node[dir][key].id == target.id) return false, name = key
+                                    return true
+                                })
+
+                                switch (target.direction) {
+                                    case "INPUT":
+                                        NodeManager.RemoveInputConnections(n_node[dir][name])
+                                        break
+                                    case "OUTPUT":
+                                        NodeManager.RemoveOutputConnections(n_node[dir][name])
+                                        break
+                                }
+                                // NodeManager.RemoveInputConnections(node.outputs[o])
                             }
                         }]
                     })
