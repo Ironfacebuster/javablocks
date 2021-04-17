@@ -966,37 +966,50 @@
 
                     // Node context menu
                     // make this context the active MENU
-                    var views = [{
+                    var views = []
+
+                    const has_inputs = Object.keys(node.GetInputs()).length != 0
+                    const has_outputs = Object.keys(node.GetOutputs()).length != 0
+
+                    console.log(has_inputs, has_outputs)
+
+                    var wires = {
                         title: "Wires",
-                        views: [{
-                            title: "Remove Input Wires",
-                            function: () => {
-                                var node = NodeManager.GetNode(node_id)
-                                console.log(node)
-                            }
-                        }, {
-                            title: "Remove Output Wires",
-                            function: () => {
-                                var node = NodeManager.GetNode(node_id)
-                                console.log(node)
-                            }
-                        }, {
-                            title: "Remove All Wires",
-                            function: () => {
-                                var node = NodeManager.GetNode(node_id)
-                                console.log(node)
-                            }
-                        }]
-                    }]
+                        views: []
+                    }
+
+
+                    if (has_inputs) wires.views.push({
+                        title: "Remove input wires",
+                        function: () => {
+                            var node = NodeManager.GetNode(node_id)
+                            console.log(node)
+                        }
+                    })
+                    if (has_outputs) wires.views.push({
+                        title: "Remove output wires",
+                        function: () => {
+                            var node = NodeManager.GetNode(node_id)
+                            console.log(node)
+                        }
+                    })
+                    if (has_inputs && has_outputs) wires.views.push({
+                        title: "Detach all wires",
+                        function: () => {
+                            var node = NodeManager.GetNode(node_id)
+                            console.log(node)
+                        }
+                    })
+                    if (has_inputs || has_outputs) views.push(wires)
 
                     if (!node.default) views.push({
                         title: "Input/Output", views: [{
-                            title: "New Input",
+                            title: "New input",
                             function: () => {
 
                             }
                         }, {
-                            title: "New Output",
+                            title: "New output",
                             function: () => {
 
                             }
@@ -1006,12 +1019,12 @@
                     views.push({
                         title: "Nodes",
                         views: [{
-                            title: "Duplicate Node",
+                            title: "Duplicate node",
                             function: () => {
 
                             }
                         }, {
-                            title: "Delete Node",
+                            title: "Delete node",
                             function: () => {
                                 NodeManager.DeleteNode(node_id)
                             }
@@ -1033,7 +1046,7 @@
 
                             }
                         }, {
-                            title: "Remove All Wires",
+                            title: "Detach All Wires",
                             function: () => {
 
                             }
@@ -1042,12 +1055,12 @@
 
                     if (!node.default) views.push({
                         title: "Input/Output", views: [{
-                            title: "Add New",
+                            title: "Add new",
                             function: () => {
 
                             }
                         }, {
-                            title: "Duplicate This",
+                            title: "Duplicate this",
                             function: () => {
 
                             }
@@ -1057,12 +1070,12 @@
                     views.push({
                         title: "Nodes",
                         views: [{
-                            title: "Duplicate Node",
+                            title: "Duplicate node",
                             function: () => {
 
                             }
                         }, {
-                            title: "Delete Node",
+                            title: "Delete node",
                             function: () => {
                                 NodeManager.DeleteNode(node_id)
                             }
@@ -1084,7 +1097,7 @@
                 }
                 var views = [{
                     title: "Nodes", views: [{
-                        title: "Create Empty Node",
+                        title: "Create empty node",
                         function: () => {
                             var n = NodeManager.CreateNode()
                             n.position = pos
