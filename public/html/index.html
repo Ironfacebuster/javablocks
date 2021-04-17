@@ -506,6 +506,7 @@
                 ClearCanvas()
                 var endpoint = Mouse.position
 
+                UpdateAndDrawNodes()
                 var t = GetOverlappedNode(Mouse.position)
 
                 // making_connection = false
@@ -521,7 +522,6 @@
 
                 if (endpoint == Mouse.position) making_connection = false
 
-                UpdateAndDrawNodes()
 
                 DrawConnection(Mouse.target.position, endpoint, true)
 
@@ -667,17 +667,20 @@
 
                 if (inputs[k].type != "Selection") {
 
+                    var new_x = bounds.x.min,
+                        new_y = y - 8
+
                     if (draw_collision)
                         DrawCollision({
-                            x: bounds.x.min,
-                            y: y - 5,
-                            width: 10,
-                            height: 10
+                            x: new_x,
+                            y: new_y,
+                            width: 15,
+                            height: 15
                         })
 
                     // console.log(y)
-                    if (point.x >= bounds.x.min && point.x <= bounds.x.min + 10) {
-                        if (point.y >= y - 5 && point.y <= y + 5) {
+                    if (point.x >= new_x && point.x <= new_x + 15) {
+                        if (point.y >= new_y && point.y <= new_y + 15) {
                             // inputs[k].position = {
                             //     x: bounds.x.min + 5,
                             //     y: y
@@ -689,20 +692,23 @@
                 } else if (inputs[k].type == "Selection") {
                     // roundRect(ctx, position.x + 10, position.y + nHeight - 12, scale.x / 2 - 10, 15, 5, true, true)
                     var y = pos.y + (20 + (i * 25)) - 5
+                    var minY = y - 10
+                    var maxY = y + 8
+                    var minX = pos.x + 10
+                    var width = scale.x / 2 - 10
+                    var maxX = pos.x + width
 
                     if (draw_collision)
                         DrawCollision({
                             x: pos.x + 10,
-                            y: y - 6,
-                            width: scale.x / 2 - 10,
-                            height: 12
+                            y: minY + 2,
+                            width: width,
+                            height: 16
                         })
                     // console.log(y)
-                    if (point.x >= pos.x + 10 && point.x <= pos.x + scale.x / 2) {
-                        if (point.y >= y - 6 && point.y <= y + 6) {
-                            target = inputs[k]
-                            return false
-                        }
+                    if ((point.x >= minX && point.x <= maxX) && (point.y >= minY && point.y <= maxY)) {
+                        target = inputs[k]
+                        return false
                     }
                 }
 
@@ -711,22 +717,24 @@
 
             Object.keys(outputs).every((k, i) => {
                 // calc y level
-                var y = pos.y + (20 + (i * 25)) - 4
+                var y = pos.y + (20 + (i * 25)) - 12
+
+                var new_x = bounds.x.max - 15
 
                 if (draw_collision)
                     DrawCollision({
-                        x: bounds.x.max - 10,
-                        y: y - 5,
-                        width: 10,
-                        height: 10
+                        x: new_x,
+                        y: y,
+                        width: 15,
+                        height: 15
                     })
 
                 // console.log(y)
-                if (point.x >= bounds.x.max - 10 && point.x <= bounds.x.max) {
-                    if (point.y >= y - 5 && point.y <= y + 5) {
+                if (point.x >= bounds.x.max - 15 && point.x <= bounds.x.max) {
+                    if (point.y >= y && point.y <= y + 15) {
                         outputs[k].position = {
                             x: bounds.x.max - 5,
-                            y: y
+                            y: y + 8
                         }
                         target = outputs[k]
                         return false
