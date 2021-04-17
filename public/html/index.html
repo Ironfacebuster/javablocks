@@ -245,10 +245,6 @@
         })
     }
 
-    // function rectangle(ctx, x, y, width, height, fill) {
-
-    // }
-
     function circle(ctx, x, y, radius, fill, stroke) {
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, 2 * Math.PI)
@@ -819,14 +815,17 @@
                                         y: c.position.y
                                     }
 
-                                    for (var i = 0; i <= 128; i += 4) {
-                                        const t = i / 128,
-                                            t2 = (i + 4) / 128
+                                    for (var i = 0; i <= 64; i += 2) {
+                                        const t = i / 64,
+                                            t2 = (i + 2) / 64
 
-                                        const point1 = CalculateBezier(t, c_point1, mid, c_point2),
-                                            point2 = CalculateBezier(t2, c_point1, mid, c_point2)
+                                        let p1 = CalculateBezier(t, output.position, c_point1, mid),
+                                            p2 = CalculateBezier(t2, output.position, c_point1, mid)
 
-                                        if (Intersecting(Mouse.startPosition, Mouse.position, point1, point2)) {
+                                        let p3 = CalculateBezier(t, mid, c_point2, c.position),
+                                            p4 = CalculateBezier(t2, mid, c_point2, c.position)
+
+                                        if (Intersecting(Mouse.startPosition, Mouse.position, p1, p2) || Intersecting(Mouse.startPosition, Mouse.position, p3, p4)) {
                                             console.log("INTERSECTION!")
                                             sliced_connections.push({
                                                 base: output,
@@ -1225,7 +1224,7 @@
                 if (!Mouse.dragging) UpdateAndDrawNodes()
             }
         })
-    }, 4)
+    }, 16)
 
     InitCanvas()
 </script>
