@@ -408,39 +408,23 @@
             y: (e.clientY - rect.top) * (canvas.height / rect.height)
         }
 
+        // Mouse.target = GetOverlappedNode(Mouse.position)
+
         // console.log(Mouse.velocity)
 
         // check if mouse is within a node if not dragging
-        if (!Mouse.dragging)
-            NodeManager.GetNodes().every(node => {
-                const pos = node.position,
-                    scale = node.scale
+        if (!Mouse.dragging) {
+            var t = GetOverlappedNode(Mouse.position)
 
-                var bounds = {
-                    x: {
-                        min: pos.x - 5,
-                        max: pos.x + scale.x + 5
-                    },
-                    y: {
-                        min: pos.y,
-                        max: pos.y + scale.y
-                    }
-                }
-
-                // default select node
-                var t = GetOverlappedNode(Mouse.position)
-
-                if (t) {
-                    Mouse.target = t
-                    canvas.style.cursor = Mouse.target.type == "Node" ? "grab" : "pointer"
-                    return false
-                } else {
-                    Mouse.target = undefined
-                    canvas.style.cursor = "auto"
-                }
-
-                return true
-            })
+            if (t) {
+                Mouse.target = t
+                canvas.style.cursor = Mouse.target.type == "Node" ? "grab" : "pointer"
+                return false
+            } else {
+                Mouse.target = undefined
+                canvas.style.cursor = "auto"
+            }
+        }
 
         if (Mouse.target && Mouse.dragging) {
             CloseMenuOverlay()
@@ -499,7 +483,7 @@
 
                     UpdateAndDrawNodes()
                 }
-            } else if (Mouse.target.type != "Selection") {
+            } else if (Mouse.target.type != "Selection" && Mouse.target.type != "ContextMenuItem") {
                 // if the target is not a selection, EG any input/output
                 canvas.style.cursor = "crosshair"
 
@@ -591,7 +575,23 @@
     // right now only checks nodes
     function GetOverlappedNode(point) {
         var target = undefined
-        NodeManager.GetNodes().every(node => {
+
+        if (Array.isArray(MenuOverlay.collision) && MenuOverlay.collision.length > 0)
+            MenuOverlay.collision.every(col => {
+                const xbound = Mouse.position.x >= col.x && Mouse.position.x <= col.x + col.width,
+                    ybound = Mouse.position.y >= col.y && Mouse.position.y <= col.y + col.height
+                if (xbound && ybound) {
+                    target = {
+                        type: "ContextMenuItem",
+                        function: col.function
+                    }
+                    return false
+                }
+                // console.log(col)
+
+                return true
+            })
+        else NodeManager.GetNodes().every(node => {
             var t = CheckPointInNode(node, point)
 
             if (typeof t != "undefined") {
@@ -910,6 +910,14 @@
                 if (Mouse.target.type == "Node") {
                     CloseMenuOverlay()
                     ClearMouseSelection()
+                } else if (Mouse.target.type == "ContextMenuItem") {
+                    // if hovering over a context menu item
+                    // console.log(Mouse.target)
+                    console.log("CONTEXT MENU")
+                    Mouse.target.function()
+
+                    CloseMenuOverlay()
+                    UpdateAndDrawNodes()
                 } else if (Mouse.target.type == "Selection") {
                     canvas.style.cursor = "auto"
                     UpdateAndDrawNodes()
@@ -923,6 +931,7 @@
                     }
                     SetMenuOverlay(pos, DrawSelectionDropdown, {
                         views: Mouse.target.views,
+                        selection: Mouse.target,
                         parent: Mouse.target.parent
                     })
                 }
@@ -952,14 +961,44 @@
             if (typeof Mouse.target != "undefined") {
                 // right clicked on something
                 if (Mouse.target.type == "Node") {
+                    let node_id = Mouse.target.id
+
                     // Node context menu
                     // make this context the active MENU
                     var views = [{
                         title: "Wires",
-                        views: ["Remove Input Wires", "Remove Output Wires", "Remove All Wires"]
+                        views: [{
+                            title: "Remove Input Wires",
+                            function: () => {
+                                var node = NodeManager.GetNode(node_id)
+                                console.log(node)
+                            }
+                        }, {
+                            title: "Remove Output Wires",
+                            function: () => {
+                                var node = NodeManager.GetNode(node_id)
+                                console.log(node)
+                            }
+                        }, {
+                            title: "Remove All Wires",
+                            function: () => {
+                                var node = NodeManager.GetNode(node_id)
+                                console.log(node)
+                            }
+                        }]
                     }, {
                         title: "Nodes",
-                        views: ["Duplicate Node", "Delete Node"]
+                        views: [{
+                            title: "Duplicate Node",
+                            function: () => {
+
+                            }
+                        }, {
+                            title: "Delete Node",
+                            function: () => {
+                                NodeManager.DeleteNode(node_id)
+                            }
+                        }]
                     }]
 
                     const pos = {
@@ -970,7 +1009,19 @@
                 } else {
                     // input/output context menu
                     // make this context the active MENU
-                    var views = [{ title: "Wires", views: ["New Wire", "Remove All Wires"] }]
+                    var views = [{
+                        title: "Wires", views: [{
+                            title: "New Wire",
+                            function: () => {
+
+                            }
+                        }, {
+                            title: "Remove All Wires",
+                            function: () => {
+
+                            }
+                        }]
+                    }]
                     const pos = {
                         x: Mouse.position.x,
                         y: Mouse.position.y
@@ -980,7 +1031,14 @@
             } else {
                 // general context menu
                 // make this context the active MENU
-                var views = [{ title: "Nodes", views: ["Create Empty Node", "Paste Node"] }]
+                var views = [{
+                    title: "Nodes", views: [{
+                        title: "Create Empty Node",
+                        function: () => {
+                            NodeManager.CreateNode()
+                        }
+                    }]
+                }]
                 const pos = {
                     x: Mouse.position.x,
                     y: Mouse.position.y
@@ -994,7 +1052,10 @@
         e.stopPropagation()
     })
 
+
     function SetMenuOverlay(position, funct, data) {
+        // menu collision set by rendering function
+        MenuOverlay.collision = []
         // set the rendering function to use when drawing this menu
         MenuOverlay.funct = () => { funct(data, position) }
         MenuOverlay.active = true
@@ -1003,12 +1064,14 @@
 
     function CloseMenuOverlay() {
         MenuOverlay.active = false
+        MenuOverlay.collision = []
         MenuOverlay.scrollHeight = 0
     }
 
     function DrawSelectionDropdown(data, position) {
         const views = data.views
         const parent = data.parent
+        const selection = data.selection
 
         var calc_height = (views.length) * 15 + 5
         var height = Math.max(15, calc_height)
@@ -1031,11 +1094,23 @@
         ctx.strokeStyle = "white"
         ctx.textAlign = "left"
 
+        MenuOverlay.collision = []
+
         views.every((view, i) => {
             const h = 20 + i * 15 + (drawScroll ? MenuOverlay.scrollHeight : 0)
 
             if (h >= 16 && h <= height + 2)
-                ctx.fillText(view.name, position.x + 14, position.y + h)
+                ctx.fillText(view.name, position.x + 14, position.y + h),
+                    MenuOverlay.collision.push({
+                        x: position.x + 12,
+                        y: position.y + h - 15,
+                        width: parent.scale.x * 0.75,
+                        height: 15,
+                        function: () => {
+                            console.log(i)
+                            selection.SetSelection(i)
+                        }
+                    })
             return true
         })
 
@@ -1081,7 +1156,10 @@
         ctx.fillStyle = "white"
         ctx.strokeStyle = "white"
         ctx.textAlign = "left"
-        var i = 0;
+        var i = 0
+
+        MenuOverlay.collision = []
+
         views.forEach((view) => {
             var h = 16 + i * 18
 
@@ -1097,8 +1175,16 @@
             i++
 
             view.views.forEach(element => {
+                // console.log(element)
                 h = 16 + i * 18
-                ctx.fillText(element, position.x + 6, position.y + h)
+                ctx.fillText(element.title, position.x + 6, position.y + h)
+                MenuOverlay.collision.push({
+                    x: position.x + 6,
+                    y: position.y + h - 12,
+                    width: 170,
+                    height: 18,
+                    function: element.function
+                })
                 i++
             })
 
