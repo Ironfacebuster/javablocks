@@ -940,25 +940,7 @@
                 console.log("SLICED", sliced_connections)
 
                 sliced_connections.forEach(con => {
-                    var index = con.base.connections.findIndex((c) => { return c.id == con.connection.id })
-
-                    // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
-                    if (con.base.connections.length > 1 && index > 0 && index < con.base.connections.length - 1)
-                        con.base.connections = con.base.connections.splice(index - 1, 1)
-                    // if the index is zero, shift out the first connection
-                    else if (index == 0) con.base.connections.shift()
-                    // if the index is the last item, pop it
-                    else if (index == con.base.connections.length - 1) con.base.connections.pop()
-                    // if this connection is the last in the array, set the array to be empty
-                    else if (con.base.connections.length == 1) con.base.connections = []
-
-                    // since inputs can only have one connection, clear the input's connections
-                    con.connection.connections = []
-                    // set the end connection's default value
-                    con.connection.value = con.connection.default_value
-                    // call "execute" if it has it
-                    if (con.connection.hasOwnProperty("execute"))
-                        con.connection.execute()
+                    NodeManager.RemoveOutputConnection(con.base, con.connection)
                 })
 
                 UpdateAndDrawNodes()
@@ -1043,8 +1025,9 @@
             if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
             if (making_connection) {
                 // complete the connections
+                console.log(con1, con2)
                 if (con1.direction == "OUTPUT" && con2.connections.length == 0)
-                    con1.connections.push(con2), con2.connections.push(con2)
+                    con1.connections.push(con2), con2.connections.push(con1)
                 else if (con2.direction == "OUTPUT" && con1.connections.length == 0)
                     con2.connections.push(con1), con1.connections.push(con2)
 
