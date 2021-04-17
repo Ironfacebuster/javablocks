@@ -66,11 +66,27 @@ function NMCreateNode(name, description) {
         node.dirty = dirty
     }
 
+    let GetInputs = (array) => {
+        var n_node = NodeManager.GetNode(node.id)
+        array = array || false
+        // TODO: if array, return an array of the inputs 
+        return n_node.inputs
+    }
+
+    let GetOutputs = (array) => {
+        var n_node = NodeManager.GetNode(node.id)
+        array = array || false
+        // TODO: if array, return an array of the outputs
+        return n_node.outputs
+    }
+
+    node.SetAccent = SetAccent
     node.AddInput = AddInput
     node.AddOutput = AddOutput
+    node.GetInputs = GetInputs
+    node.GetOutputs = GetOutputs
     node.GetName = GetName
     node.GetFullName = GetFullName
-    node.SetAccent = SetAccent
     node.BringToFront = () => {
         const front = NodeManager.GetNodes()[0]
 
@@ -88,7 +104,9 @@ function NMCreateNode(name, description) {
 }
 
 function NMDeleteNode(id) {
-    var index = nodes.findIndex((n) => { return n.id == id })
+    var index = nodes.findIndex((n) => {
+        return n.id == id
+    })
 
     if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
 
@@ -323,7 +341,9 @@ window.NodeManager = {
         return nodes
     },
     GetNode: (id) => {
-        return nodes[nodes.findIndex((node) => { return node.id == id })]
+        return nodes[nodes.findIndex((node) => {
+            return node.id == id
+        })]
     }
 }
 
