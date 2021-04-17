@@ -315,7 +315,7 @@
             case "Object":
                 return {
                     fill: "white",
-                    stroke: "#44eeee"
+                    stroke: "#4444ee"
                 }
             default:
                 return {
@@ -880,8 +880,10 @@
                     var minY = node.position.y,
                         maxY = node.position.y + node.scale.y
 
-                    if (minX >= bounds.x.min && minX <= bounds.x.max && minY >= bounds.y.min && minY <= bounds.y.max) inSelection = true
-                    if (maxX >= bounds.x.min && maxX <= bounds.x.max && maxY >= bounds.y.min && maxY <= bounds.y.max) inSelection = true
+                    var xInBounds = (minX >= bounds.x.min && minX <= bounds.x.max) || (maxX >= bounds.x.min && maxX <= bounds.x.max)
+                    var yInBounds = (minY >= bounds.y.min && minY <= bounds.y.max) || (maxY >= bounds.y.min && maxY <= bounds.y.max)
+
+                    inSelection = xInBounds && yInBounds
 
                     if (inSelection) selected.push(node)
                 })
