@@ -132,6 +132,13 @@
         ctx.strokeStyle = "rgba(1,1,1,0.5)"
         roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
 
+        if (Array.isArray(Mouse.selected) && Mouse.selected.findIndex((n) => { return n.id == node.id }) >= 0) {
+            // outline this node
+            ctx.fillStyle = "rgba(0,255,128,0.1)"
+            ctx.strokeStyle = "rgba(0,255,64,0.75)"
+            roundRect(ctx, position.x - 1, position.y - 1, scale.x + 2, scale.y + 2, 5, false, true)
+        }
+
         ctx.textAlign = "left"
         ctx.font = "bold 10px Arial"
         ctx.fillStyle = "white"
@@ -430,29 +437,58 @@
             // dragging something
 
             if (Mouse.target.type == "Node") {
-                // if the target is a node, we're trying to move it!
-                Mouse.target.BringToFront()
-                canvas.style.cursor = "grabbing"
-                var p = Mouse.target.position
+                // console.log(Mouse.selected, Mouse.selected.length > 0, Mouse.selected.findIndex((node) => { return node.id == Mouse.target.id }) != -1)
+                if (Array.isArray(Mouse.selected) && Mouse.selected.length > 0 && Mouse.selected.findIndex((node) => { return node.id == Mouse.target.id }) != -1) {
+                    // if we selected objects with the selection box, and are dragging a selected node
+                    Mouse.target.BringToFront()
+                    canvas.style.cursor = "grabbing"
 
-                if (typeof dragOffset == "undefined") {
-                    dragOffset = {
-                        x: Mouse.position.x - p.x,
-                        y: Mouse.position.y - p.y
+                    Mouse.selected.forEach(sel_node => {
+                        var p = sel_node.position
+
+                        if (!sel_node.hasOwnProperty("dragOffset")) {
+                            sel_node.dragOffset = {
+                                x: Mouse.position.x - p.x,
+                                y: Mouse.position.y - p.y
+                            }
+                        }
+
+
+                        sel_node.position = {
+                            x: Mouse.position.x - sel_node.dragOffset.x,
+                            y: Mouse.position.y - sel_node.dragOffset.y
+                        }
+
+                        UpdateNodePositions(sel_node)
+                    })
+
+                    UpdateAndDrawNodes()
+                } else {
+                    // deselect any selected nodes
+                    ClearMouseSelection()
+                    // if the target is a node, we're trying to move it!
+                    Mouse.target.BringToFront()
+                    canvas.style.cursor = "grabbing"
+                    var p = Mouse.target.position
+
+                    if (typeof dragOffset == "undefined") {
+                        dragOffset = {
+                            x: Mouse.position.x - p.x,
+                            y: Mouse.position.y - p.y
+                        }
                     }
-                    console.log(dragOffset)
+
+                    Mouse.target.position = {
+                        x: Mouse.position.x - dragOffset.x,
+                        y: Mouse.position.y - dragOffset.y
+                    }
+
+                    // Mouse.target.MarkDirty(true)
+
+                    UpdateNodePositions(Mouse.target)
+
+                    UpdateAndDrawNodes()
                 }
-
-                Mouse.target.position = {
-                    x: Mouse.position.x - dragOffset.x,
-                    y: Mouse.position.y - dragOffset.y
-                }
-
-                // Mouse.target.MarkDirty(true)
-
-                UpdateNodePositions(Mouse.target)
-
-                UpdateAndDrawNodes()
             } else if (Mouse.target.type != "Selection") {
                 // if the target is not a selection, EG any input/output
                 canvas.style.cursor = "crosshair"
@@ -527,6 +563,17 @@
         }
 
     }, false)
+
+    function ClearMouseSelection(clean) {
+        clean = clean || false
+        if (Mouse.selected)
+            Mouse.selected.forEach(n => {
+                delete (n.dragOffset)
+            })
+
+        if (clean)
+            Mouse.selected = []
+    }
 
     // this function will check all visible objects
     // Nodes, context menus, dropdowns
@@ -725,6 +772,8 @@
         var no_update = false
 
         if (e.button == 0) {
+            if (!Mouse.dragging) ClearMouseSelection(true)
+
             if (Mouse.slicing) {
                 var sliced_connections = []
                 console.log("Stop slicing")
@@ -796,24 +845,57 @@
             }
 
             if (Mouse.selecting) {
+                ClearMouseSelection()
+
+                const bounds = {
+                    x: {
+                        min: Math.min(Mouse.position.x, Mouse.startPosition.x),
+                        max: Math.max(Mouse.position.x, Mouse.startPosition.x)
+                    },
+                    y: {
+                        min: Math.min(Mouse.position.y, Mouse.startPosition.y),
+                        max: Math.max(Mouse.position.y, Mouse.startPosition.y)
+                    }
+                }
+
+                var selected = []
+
+                NodeManager.GetNodes().forEach(node => {
+                    var inSelection = false
+                    var minX = node.position.x,
+                        maxX = node.position.x + node.scale.x
+
+                    var minY = node.position.y,
+                        maxY = node.position.y + node.scale.y
+
+                    if (minX >= bounds.x.min && minX <= bounds.x.max && minY >= bounds.y.min && minY <= bounds.y.max) inSelection = true
+                    if (maxX >= bounds.x.min && maxX <= bounds.x.max && maxY >= bounds.y.min && maxY <= bounds.y.max) inSelection = true
+
+                    if (inSelection) selected.push(node)
+                })
+
                 console.log("Stop selecting")
+
+                console.log(selected)
+                Mouse.selected = selected
                 Mouse.selecting = false
             }
 
             if (typeof Mouse.target != "undefined") {
                 if (Mouse.target.type == "Node") {
                     CloseMenuOverlay()
-                    var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
-                    if (magnitude == 0) Mouse.target.position.velocity = {
-                        x: 0,
-                        y: 0,
-                        magnitude: 0
-                    }
-                    else Mouse.target.position.velocity = {
-                        x: Mouse.velocity.x / magnitude,
-                        y: Mouse.velocity.y / magnitude,
-                        magnitude: magnitude
-                    }
+                    ClearMouseSelection()
+                    // var magnitude = Math.sqrt((Mouse.velocity.x * Mouse.velocity.x) + (Mouse.velocity.y * Mouse.velocity.y))
+                    // if (magnitude == 0) Mouse.target.position.velocity = {
+                    //     x: 0,
+                    //     y: 0,
+                    //     magnitude: 0
+                    // }
+                    // else Mouse.target.position.velocity = {
+                    //     x: Mouse.velocity.x / magnitude,
+                    //     y: Mouse.velocity.y / magnitude,
+                    //     magnitude: magnitude
+                    // }
                 } else if (Mouse.target.type == "Selection") {
                     canvas.style.cursor = "auto"
                     UpdateAndDrawNodes()
@@ -832,6 +914,7 @@
 
                 }
             } else {
+                // ClearMouseSelection()
                 CloseMenuOverlay()
             }
 
@@ -862,7 +945,7 @@
                         views: ["Remove Input Wires", "Remove Output Wires", "Remove All Wires"]
                     }, {
                         title: "Nodes",
-                        views: ["Copy Node", "Delete Node"]
+                        views: ["Duplicate Node", "Delete Node"]
                     }]
                     // DrawContextMenu(views)
                     const pos = {
@@ -1056,59 +1139,61 @@
         return false
     }
 
+    /*
     // a little closer, but no cigar.
-    // function CalculateBezier(t) {
-    //     const start = 1,
-    //         end = arguments.length - 1
+    function CalculateBezier(t) {
+        const start = 1,
+            end = arguments.length - 1
 
-    //     const exp_start = arguments.length - 2
-    //     var exp = arguments.length - 2,
-    //         mant = 1
+        const exp_start = arguments.length - 2
+        var exp = arguments.length - 2,
+            mant = 1
 
-    //     var n_x = 0,
-    //         n_y = 0
+        var n_x = 0,
+            n_y = 0
 
-    //     for (var i = 1; i < arguments.length; ++i) {
-    //         if (i == start) {
-    //             console.log("START")
-    //             // beginning of bezier curve
-    //             // if there are 4 points, exp == 3
-    //             n_x += (Math.pow(1 - t, exp) * arguments[i].x)
-    //             n_y += (Math.pow(1 - t, exp) * arguments[i].y)
-    //         } else if (i == end) {
-    //             // end of bezier curve
-    //             console.log("END")
-    //             n_x += (Math.pow(t, exp_start) * arguments[i].x)
-    //             n_y += (Math.pow(t, exp_start) * arguments[i].y)
-    //         } else {
-    //             console.log("EXPONENT", exp)
-    //             console.log("EXPONENT START", exp_start)
-    //             console.log("MANT", mant)
-    //             // in the middle of the curve
-    //             if (exp == 1) {
-    //                 // n_x += (3 * (1 - t) * (t * t) * p3.x)
-    //                 // n_x += (exp_start * (1 - t) )
-    //                 console.log(exp)
-    //             } else if (exp > 1) {
-    //                 // n_x += (3 * Math.pow(1 - t, 2) * t * p2.x)
-    //                 n_x += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].x
-    //                 n_y += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].y
-    //             }
-    //             // if (exp > 1) {
-    //             //     n_x += (Math.pow(t, exp))
-    //             // }
-    //         }
+        for (var i = 1; i < arguments.length; ++i) {
+            if (i == start) {
+                console.log("START")
+                // beginning of bezier curve
+                // if there are 4 points, exp == 3
+                n_x += (Math.pow(1 - t, exp) * arguments[i].x)
+                n_y += (Math.pow(1 - t, exp) * arguments[i].y)
+            } else if (i == end) {
+                // end of bezier curve
+                console.log("END")
+                n_x += (Math.pow(t, exp_start) * arguments[i].x)
+                n_y += (Math.pow(t, exp_start) * arguments[i].y)
+            } else {
+                console.log("EXPONENT", exp)
+                console.log("EXPONENT START", exp_start)
+                console.log("MANT", mant)
+                // in the middle of the curve
+                if (exp == 1) {
+                    // n_x += (3 * (1 - t) * (t * t) * p3.x)
+                    // n_x += (exp_start * (1 - t) )
+                    console.log(exp)
+                } else if (exp > 1) {
+                    // n_x += (3 * Math.pow(1 - t, 2) * t * p2.x)
+                    n_x += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].x
+                    n_y += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].y
+                }
+                // if (exp > 1) {
+                //     n_x += (Math.pow(t, exp))
+                // }
+            }
 
-    //         exp--
-    //         mant++
-    //     }
+            exp--
+            mant++
+        }
 
-    //     return {
-    //         t: t,
-    //         x: n_x,
-    //         y: n_y
-    //     }
-    // }
+        return {
+            t: t,
+            x: n_x,
+            y: n_y
+        }
+    }
+    */
 
     canvas.addEventListener('contextmenu', function (e) {
         if (e.button == 2)
