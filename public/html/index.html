@@ -1031,18 +1031,19 @@
             } else {
                 // general context menu
                 // make this context the active MENU
-                var views = [{
-                    title: "Nodes", views: [{
-                        title: "Create Empty Node",
-                        function: () => {
-                            NodeManager.CreateNode()
-                        }
-                    }]
-                }]
                 const pos = {
                     x: Mouse.position.x,
                     y: Mouse.position.y
                 }
+                var views = [{
+                    title: "Nodes", views: [{
+                        title: "Create Empty Node",
+                        function: () => {
+                            var n = NodeManager.CreateNode()
+                            n.position = pos
+                        }
+                    }]
+                }]
                 SetMenuOverlay(pos, DrawContextMenu, views)
             }
         }
