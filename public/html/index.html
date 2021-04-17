@@ -1022,6 +1022,13 @@
                     views.push({
                         title: "Nodes",
                         views: [{
+                            title: "Enter node",
+                            function: () => {
+                                // enter this node and enter edit mode
+                                // default nodes -> convert JS to uneditable nodes?
+                                // user created nodes -> enter node edit mode
+                            }
+                        }, {
                             title: "Duplicate node",
                             function: () => {
 
@@ -1071,6 +1078,22 @@
                                 if (target.direction == "INPUT") n_node.AddInput(name, NodeManager.CreateAnyInput())
                                 else n_node.AddOutput(name, NodeManager.CreateAnyOutput())
                             }
+                        }, {
+                            title: "Delete this",
+                            function: () => {
+                                // TODO: add a more elegant way of deleting input/outputs (clean up connections)
+                                var n_node = NodeManager.GetNode(node_id)
+                                const dir = target.direction.toLowerCase() + "s"
+
+                                var name = target.direction.toLowerCase()
+                                // hacky way, but I need to to get the name somehow
+                                Object.keys(n_node[dir]).every(key => {
+                                    if (n_node[dir][key].id == target.id) return false, name = key
+                                    return true
+                                })
+
+                                delete (n_node[dir][name])
+                            }
                         }]
                     })
 
@@ -1091,6 +1114,13 @@
                     views.push({
                         title: "Nodes",
                         views: [{
+                            title: "Enter node",
+                            function: () => {
+                                // enter this node and enter edit mode
+                                // default nodes -> convert JS to uneditable nodes?
+                                // user created nodes -> enter node edit mode
+                            }
+                        }, {
                             title: "Duplicate node",
                             function: () => {
 
