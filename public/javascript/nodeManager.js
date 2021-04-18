@@ -1,138 +1,255 @@
 var nodes = []
 
-let GenerateID = (length) => {
-    // ensure there can't be duplicate IDs
-    var str = Date.now().toString(16) + "_"
-    while (str.length < length) {
-        str = str + Math.round(Math.random() * 16).toString(16)
-    }
-    return str
-}
-
-function NMCreateNode(name, description) {
-    var node = {
-        id: GenerateID(16),
-        name: name || "Unnamed Node",
-        description: description || "An empty node.",
-        inputs: {},
-        outputs: {},
-        accent: "FFFFFF",
-        execute: null,
-        type: "Node",
-        position: {
-            x: 0,
-            y: 0
-        },
-        scale: {
-            x: 150,
-            y: 25 // base height is 20px
-        },
-        zindex: NodeManager.GetNodes().length > 0 ? NodeManager.GetNodes()[0].zindex + 1 : 0,
-        dirty: true
+class NodeManager {
+    nodes = []
+    constructor() {
+        this.nodes = []
     }
 
-    let AddInput = (title, input) => {
-        title = IterateUntilFree(title, node.inputs)
-        input.parent = node
-        node.inputs[title] = input
-        return node.inputs[title]
-    }
+    CreateNode(name, description) {
+        var node = new Node(this)
+        node.SetName(name).SetDescription(description)
 
-    let AddOutput = (title, output) => {
-        title = IterateUntilFree(title, node.outputs)
-        output.parent = node
-        node.outputs[title] = output
-        return node.outputs[title]
-    }
+        // NodeManager keeps track of this node.
+        this.nodes.push(node)
 
-    let GetName = () => {
-        return node.name
-    }
-
-    let GetFullName = () => {
-        return `${node.name} [${node.id.split("_")[1]}]`
-    }
-
-    let SetAccent = (color) => {
-        node.accent = color
         return node
     }
 
-    let isDirty = () => {
-        return node.dirty
+    GetNodes() {
+        // sort nodes by z index
+        this.nodes = this.nodes.sort((a, b) => {
+            return b.zindex - a.zindex
+        })
+        return this.nodes
     }
 
-    let MarkDirty = (dirty) => {
-        node.dirty = dirty
+    GetNode(id) {
+        const index = this.nodes.findIndex((n) => {
+            return n.id == id
+        })
+        console.log(index)
+        return this.nodes[index]
     }
 
-    let GetInputs = (array) => {
-        var n_node = NodeManager.GetNode(node.id)
-        array = array || false
-        // TODO: if array, return an array of the inputs 
-        return n_node.inputs
+    DeleteNode(id) {
+        var nodes = this.nodes
+
+        var index = nodes.findIndex((n) => {
+            return n.id == id
+        })
+
+        if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
+
+        var node = this.GetNode(id)
+        console.log(nodes)
+        // clean up connections
+        Object.keys(node.inputs).forEach((i) => {
+            console.log(i, node.inputs[i])
+            this.RemoveInputConnections(node.inputs[i])
+        })
+        Object.keys(node.outputs).forEach((o) => {
+            this.RemoveOutputConnections(node.outputs[o])
+        })
+
+        console.log(index, nodes.length - 1)
+
+        if (index == 0) nodes.shift()
+        else if (index == nodes.length - 1) nodes.pop()
+        else nodes.splice(index, 1)
+
+        console.log(nodes)
+
+        console.log(`Deleted node (id ${id})`)
     }
 
-    let GetOutputs = (array) => {
-        var n_node = NodeManager.GetNode(node.id)
-        array = array || false
-        // TODO: if array, return an array of the outputs
-        return n_node.outputs
+    RemoveInputConnection(input, output) {
+        this.RemoveOutputConnection(output, input)
     }
 
-    node.SetAccent = SetAccent
-    node.AddInput = AddInput
-    node.AddOutput = AddOutput
-    node.GetInputs = GetInputs
-    node.GetOutputs = GetOutputs
-    node.GetName = GetName
-    node.GetFullName = GetFullName
-    node.BringToFront = () => {
-        const front = NodeManager.GetNodes()[0]
+    RemoveInputConnections(input) {
+        // a wrapper for RemoveOutputConnection
+        if (!input.hasOwnProperty("connections") || input.connections.length == 0) return
 
-        if (front.id != node.id) {
-            node.zindex = front.zindex + 1
+        // inputs can only have one connection, so it's safe to assume index zero will be the the connection
+        var output = input.connections[0]
+
+        this.RemoveOutputConnection(output, input)
+    }
+
+    RemoveOutputConnection(output, input) {
+        if (!output.hasOwnProperty("connections") || output.connections.length == 0) return
+
+        var index = output.connections.findIndex((c) => {
+            return c.id == input.id
+        })
+        // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
+        if (output.connections.length > 1 && index > 0 && index < output.connections.length - 1)
+            output.connections.splice(index, 1)
+        // if the index is zero, shift out the first connection
+        else if (index == 0) output.connections.shift()
+        // if the index is the last item, pop it
+        else if (index == output.connections.length - 1) output.connections.pop()
+        // if this connection is the last in the array, set the array to be empty
+        else if (output.connections.length == 1) output.connections = []
+
+        if (!input.hasOwnProperty("connections") || input.connections.length == 0) return
+        // since inputs can only have one connection, clear the input's connections
+        input.connections = []
+        // set the end connection's default value
+        input.value = input.default_value
+        // call "execute" if it has it
+        if (input.hasOwnProperty("execute"))
+            input.execute()
+    }
+
+    RemoveOutputConnections(output) {
+        if (!output.hasOwnProperty("connections") || output.connections.length == 0) return
+
+        output.connections.forEach(c => {
+            c.connections = []
+        })
+
+        output.connections = []
+    }
+}
+
+class Node {
+    context
+    type = "Node"
+    id = "no id"
+    name = "Unnamed Node"
+    description = "An empty node."
+    default = false
+    internal = false
+    position = {
+        x: 0,
+        y: 0
+    }
+    scale = {
+        x: 170,
+        y: 25
+    }
+    inputs = {}
+    outputs = {}
+    accent = "ffffff"
+    zindex = 0
+    dirty = true
+
+    constructor(context) {
+        if (!context) throw new Error("Node constructor requires NodeManager context!")
+
+        this.zindex = context.GetNodes().length > 0 ? context.GetNodes()[0].zindex + 1 : 0, this.context = context
+        this.id = GenerateID(16)
+        this.Manager = new NodeManager()
+    }
+
+    AddInput(title, input) {
+        title = IterateUntilFree(title, this.inputs)
+        input.parent = this
+        this.inputs[title] = input
+        return this.inputs[title]
+    }
+
+    AddOutput(title, output) {
+        title = IterateUntilFree(title, this.outputs)
+        output.parent = this
+        this.outputs[title] = output
+        return this.outputs[title]
+    }
+
+    isDirty() {
+        return this.dirty
+    }
+
+    BringToFront() {
+        if (!this.context) return
+
+        const front = this.context.GetNodes()[0]
+
+        if (front.id != this.id) {
+            this.zindex = front.zindex + 1
         }
     }
-    node.isDirty = isDirty
-    node.MarkDirty = MarkDirty
 
-    // NodeManager keeps track of this node.
-    nodes.push(node)
+    MarkDirty(dirty) {
+        dirty = dirty || true
+        this.dirty = dirty
+    }
 
-    return node
+    GetName() {
+        return this.name
+    }
+
+    GetFullName() {
+        return `${this.name} [${this.id}]`
+    }
+
+    GetInputs() {
+        return this.inputs
+    }
+
+    GetOutputs() {
+        return this.outputs
+    }
+
+    SetContext(context) {
+        this.context = context
+
+        return this
+    }
+
+    SetName(name) {
+        this.name = name || "Unnamed Node"
+
+        return this
+    }
+
+    SetDescription(description) {
+        this.description = description || "An empty node."
+    }
+
+    SetAccent(accent) {
+        this.accent = accent
+
+        return this
+    }
+
+    SetPosition(position) {
+        this.position = position
+
+        return this
+    }
+
+    SetScale(scale) {
+        this.scale = scale
+
+        return this
+    }
 }
 
-function NMDeleteNode(id) {
-    var index = nodes.findIndex((n) => {
-        return n.id == id
-    })
+window.Manager = new NodeManager()
 
-    if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
-
-    var node = NodeManager.GetNode(id)
-    console.log(nodes)
-    // clean up connections
-    Object.keys(node.inputs).forEach((i) => {
-        console.log(i, node.inputs[i])
-        NodeManager.RemoveInputConnections(node.inputs[i])
-    })
-    Object.keys(node.outputs).forEach((o) => {
-        NodeManager.RemoveOutputConnections(node.outputs[o])
-    })
-
-    console.log(index, nodes.length - 1)
-
-    if (index == 0) nodes.shift()
-    else if (index == nodes.length - 1) nodes.pop()
-    else nodes.splice(index, 1)
-
-    console.log(nodes)
-
-    console.log(`Deleted node (id ${id})`)
+function CreateIO(direction) {
+    return {
+        id: GenerateID(16),
+        type: "Any",
+        direction: direction,
+        value: undefined,
+        default_value: undefined,
+        connections: []
+    }
 }
 
-function NMCreateSelectionInput(views) {
+function CreateOutput() {
+    return this.CreateIO("OUTPUT")
+}
+
+function CreateInput() {
+    return this.CreateIO("INPUT")
+}
+
+function CreateSelectionInput(views) {
     var data = {
         type: "Selection",
         direction: "INPUT",
@@ -207,163 +324,132 @@ function NMCreateSelectionInput(views) {
     return data
 }
 
-function NMCreateNumberInput(default_value) {
+function CreateNumberInput(default_value) {
     default_value = default_value || 0
 
-    return {
-        id: GenerateID(16),
-        type: "Number",
-        direction: "INPUT",
-        value: default_value,
-        default_value: default_value,
-        connections: []
-    }
+    console.log(this)
+    var input = this.CreateInput()
+
+    input.type = "Number"
+    input.value = default_value
+    input.default_value = default_value
+
+    return input
 }
 
-function NMCreateNumberOutput() {
-    return {
-        id: GenerateID(16),
-        type: "Number",
-        direction: "OUTPUT",
-        value: 0,
-        default_value: 0,
-        connections: []
-    }
+function CreateNumberOutput() {
+    var output = this.CreateOutput()
+
+    output.type = "Number"
+    output.value = 0
+    output.default_value = 0
+
+    return output
 }
 
-function NMCreateNumberViewer() {
-    return {
-        id: GenerateID(16),
-        type: "Viewer",
-        direction: "OUTPUT",
-        value: 0,
-        default_value: "null"
-    }
+function CreateNumberViewerOutput() {
+    var output = this.CreateOutput()
+
+    output.type = "Viewer"
+    output.value = 0
+    output.default_value = "null"
+
+    return output
 }
 
-function NMCreateArrayInput() {
+function CreateArrayInput(default_value) {
+    default_value = default_value || []
 
-    return {
-        id: GenerateID(16),
-        type: "Array",
-        direction: "INPUT",
-        value: [],
-        default_value: [],
-        connections: []
-    }
+    var input = this.CreateInput()
+
+    input.type = "Array"
+    input.value = default_value
+    input.default_value = default_value
+
+    return input
 }
 
-function NMCreateArrayOutput() {
-    return {
-        id: GenerateID(16),
-        type: "Array",
-        direction: "OUTPUT",
-        value: [],
-        default_value: [],
-        connections: []
-    }
+function CreateArrayOutput() {
+    var output = this.CreateOutput()
+
+    output.type = "Array"
+    output.value = []
+    output.default_value = []
+
+    return output
 }
 
-function NMCreateObjectInput() {
+function CreateObjectInput(default_value) {
+    default_value = default_value || {}
 
-    return {
-        id: GenerateID(16),
-        type: "Object",
-        direction: "INPUT",
-        value: [],
-        default_value: [],
-        connections: []
-    }
+    var input = CreateInput()
+
+    input.type = "Object"
+    input.value = default_value
+    input.default_value = default_value
+
+    return input
 }
 
-function NMCreateObjectOutput() {
-    return {
-        id: GenerateID(16),
-        type: "Object",
-        direction: "OUTPUT",
-        value: [],
-        default_value: [],
-        connections: []
-    }
+function CreateObjectOutput() {
+    var output = CreateOutput()
+
+    output.type = "Object"
+    output.value = {}
+    output.default_value = {}
+
+    return output
 }
 
-function NMCreateBoolInput(default_value) {
+function CreateBoolInput(default_value) {
     default_value = default_value || false
 
-    return {
-        id: GenerateID(16),
-        type: "Boolean",
-        direction: "INPUT",
-        value: default_value,
-        default_value: default_value,
-        connections: []
-    }
+    var input = CreateInput()
+
+    input.type = "Boolean"
+    input.value = default_value
+    input.default_value = default_value
+
+    return input
 }
 
-function NMCreateBoolOutput() {
-    return {
-        id: GenerateID(16),
-        type: "Boolean",
-        direction: "OUTPUT",
-        value: false,
-        default_value: false,
-        connections: []
-    }
+function CreateBoolOutput() {
+    var output = CreateOutput()
+
+    output.type = "Boolean"
+    output.value = false
+    output.default_value = false
+
+    return output
 }
 
-function NMCreateAnyInput() {
-    return {
-        id: GenerateID(16),
-        type: "Any",
-        direction: "INPUT",
-        value: "null",
-        default_value: "null",
-        connections: []
-    }
+function CreateAnyInput() {
+    var input = this.CreateInput()
+
+    input.type = "Any"
+    input.value = "null"
+    input.default_value = "null"
+
+    return input
 }
 
-function NMCreateAnyOutput() {
-    return {
-        id: GenerateID(16),
-        type: "Any",
-        direction: "OUTPUT",
-        value: "null",
-        default_value: "null",
-        connections: []
-    }
+function CreateAnyOutput() {
+    var output = this.CreateOutput()
+
+    output.type = "Any"
+    output.value = "null"
+    output.default_value = "null"
+
+    return output
 }
 
-window.NodeManager = {
-    CreateNode: NMCreateNode,
-    DeleteNode: NMDeleteNode,
-    CreateSelectionInput: NMCreateSelectionInput,
-    CreateNumberInput: NMCreateNumberInput,
-    CreateNumberOutput: NMCreateNumberOutput,
-    CreateNumberViewerOutput: NMCreateNumberViewer,
-    CreateArrayInput: NMCreateArrayInput,
-    CreateArrayOutput: NMCreateArrayOutput,
-    CreateObjectInput: NMCreateObjectInput,
-    CreateObjectOutput: NMCreateObjectOutput,
-    CreateBoolInput: NMCreateBoolInput,
-    CreateBoolOutput: NMCreateBoolOutput,
-    CreateAnyInput: NMCreateAnyInput,
-    CreateAnyOutput: NMCreateAnyOutput,
-    GetNodes: () => {
-        // sort nodes by z index
-        nodes = nodes.sort((a, b) => {
-            return b.zindex - a.zindex
-        })
-        return nodes
-    },
-    GetNode: (id) => {
-        return nodes[nodes.findIndex((node) => {
-            return node.id == id
-        })]
-    },
-    RemoveInputConnections: NMRemoveInputConnections,
-    RemoveOutputConnections: NMRemoveOutputConnections,
-    RemoveInputConnection: NMRemoveInputConnection,
-    RemoveOutputConnection: NMRemoveOutputConnection
+let GenerateID = (length) => {
+    // ensure there can't be duplicate IDs
+    var str = Date.now().toString(16) + "_"
+    while (str.length < length) {
+        str = str + Math.round(Math.random() * 16).toString(16)
+    }
+    return str
 }
 
 Array.prototype.hasKeyValue = function (key, value) {
@@ -389,52 +475,4 @@ function IterateUntilFree(title, object) {
         }
     }
     return finaltitle
-}
-
-function NMRemoveInputConnection(input, output) {
-    NMRemoveOutputConnection(output, input)
-}
-
-function NMRemoveInputConnections(input) {
-    // a wrapper for RemoveOutputConnection
-    if (input.connections.length == 0) return
-
-    // inputs can only have one connection, so it's safe to assume index zero will be the the connection
-    var output = input.connections[0]
-
-    NodeManager.RemoveOutputConnection(output, input)
-}
-
-function NMRemoveOutputConnection(output, input) {
-    var index = output.connections.findIndex((c) => {
-        return c.id == input.id
-    })
-    // if the output has more than one connection, the index to be removed is not zero, and is less than the total amount
-    if (output.connections.length > 1 && index > 0 && index < output.connections.length - 1)
-        output.connections.splice(index, 1)
-    // if the index is zero, shift out the first connection
-    else if (index == 0) output.connections.shift()
-    // if the index is the last item, pop it
-    else if (index == output.connections.length - 1) output.connections.pop()
-    // if this connection is the last in the array, set the array to be empty
-    else if (output.connections.length == 1) output.connections = []
-
-    // since inputs can only have one connection, clear the input's connections
-    input.connections = []
-    // set the end connection's default value
-    input.value = input.default_value
-    // call "execute" if it has it
-    if (input.hasOwnProperty("execute"))
-        input.execute()
-}
-
-function NMRemoveOutputConnections(output) {
-    if (!output.hasOwnProperty("connections") || output.connections.length == 0) return
-
-    output.connections.forEach(c => {
-        console.log(c)
-        c.connections = []
-    })
-
-    output.connections = []
 }

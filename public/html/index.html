@@ -46,16 +46,16 @@
     </div>
     <div>
         <div>Node Drawer</div>
-        <button onclick="CreateMathNode()">Add Math Node</button>
-        <button onclick="CreateNumberNode()">Add Number Node</button>
-        <button onclick="CreateOperationsNode()">Add Operations Node</button>
-        <button onclick="CreateRandomNode()">Add Random Node</button>
-        <button onclick="CreateIfNode()">Add Comparison Node</button>
-        <button onclick="CreateInverterNode()">Add Inverter Node</button>
-        <button onclick="CreateViewerNode()">Add Viewer Node</button>
+        <button onclick="CreateMathFunctionsNode()">Add Math Functions Node</button>
+        <button onclick="CreateStaticNumberNode()">Add Static Number Node</button>
+        <button onclick="CreateMathOperationsNode()">Add Math Operations Node</button>
+        <button onclick="CreateRandomNumberNode()">Add Random Number Node</button>
+        <button onclick="CreateComparisonNode()">Add Comparison Node</button>
+        <button onclick="CreateBoolInverterNode()">Add Bool Inverter Node</button>
+        <button onclick="CreateValueViewerNode()">Add Value Viewer Node</button>
         <button onclick="CreateObjectNode()">Add WIP Object Node</button>
         <button onclick="CreateObjectKeyNode()">Add WIP Object Key Node</button>
-        <button onclick="CreateSwitchNode()">Add Predicate Switch Node</button>
+        <button onclick="CreatePredicateNode()">Add Predicate Switch Node</button>
     </div>
 
     <canvas id="main">
@@ -64,6 +64,7 @@
 </body>
 
 <script>
+    window.Manager = new NodeManager()
     var fast_mode = false
     var draw_collision = false
     var Mouse = {
@@ -79,9 +80,6 @@
         selecting: false,
         slicing: false
     }
-
-    var positions = {},
-        scales = {}
 
     var startX = 25,
         startY = 25
@@ -279,7 +277,7 @@
     }
 
     function DrawNodeConnections() {
-        NodeManager.GetNodes().forEach(node => {
+        Manager.GetNodes().forEach(node => {
             // draw this output's connections
             Object.keys(node.outputs).forEach(output => {
                 if (node.outputs[output].hasOwnProperty("connections"))
@@ -658,7 +656,7 @@
                 return true
             })
         }
-        else NodeManager.GetNodes().every(node => {
+        else Manager.GetNodes().every(node => {
             var t = CheckPointInNode(node, point)
 
             if (typeof t != "undefined") {
@@ -847,10 +845,10 @@
 
         DrawNodeConnections()
 
-        // NodeManager.GetNodes().forEach(node => {
+        // Manager.GetNodes().forEach(node => {
         //     DrawNode(node)
         // })
-        var nodes = NodeManager.GetNodes()
+        var nodes = Manager.GetNodes()
         for (var i = nodes.length - 1; i >= 0; --i) {
             // if (nodes[i].isDirty())
             DrawNode(nodes[i])
@@ -899,7 +897,7 @@
                 Mouse.slicing = false
 
                 // check all wires for intersections
-                NodeManager.GetNodes().forEach(node => {
+                Manager.GetNodes().forEach(node => {
                     if (Object.keys(node.outputs).length > 0)
                         Object.keys(node.outputs).forEach(o => {
                             // bezier curve will be calculated with low resolution for speed
@@ -959,7 +957,7 @@
                 console.log("SLICED", sliced_connections)
 
                 sliced_connections.forEach(con => {
-                    NodeManager.RemoveOutputConnection(con.base, con.connection)
+                    Manager.RemoveOutputConnection(con.base, con.connection)
                 })
 
                 UpdateAndDrawNodes()
@@ -981,7 +979,7 @@
 
                 var selected = []
 
-                NodeManager.GetNodes().forEach(node => {
+                Manager.GetNodes().forEach(node => {
                     var inSelection = false
                     var minX = node.position.x,
                         maxX = node.position.x + node.scale.x
@@ -1080,77 +1078,120 @@
                         views: []
                     }
 
-                    if (!node.default) views.push({
-                        title: "Input/Output", views: [{
-                            title: "New input",
-                            function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
-                                n_node.AddInput("Input", NodeManager.CreateAnyInput())
-                            }
-                        }, {
-                            title: "New output",
-                            function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
-                                console.log(n_node)
-                                n_node.AddOutput("Output", NodeManager.CreateAnyOutput())
-                            }
-                        }]
-                    })
+                    var input_views = []
+                    if (!node.default) {
+                        if (node.internal) {
+                            if (node.internal_type == "INPUT")
+                                input_views.push({
+                                    title: "New input",
+                                    function: () => {
+                                        var n_node = Manager.GetNode(node_id)
+                                        n_node.AddOutput("Input", CreateAnyOutput())
+                                    }
+                                })
+                            if (node.internal_type == "OUTPUT")
+                                input_views.push({
+                                    title: "New output",
+                                    function: () => {
+                                        var n_node = Manager.GetNode(node_id)
+                                        n_node.AddInput("Output", CreateAnyInput())
+                                    }
+                                })
+                        } else {
+                            input_views.push({
+                                title: "New input",
+                                function: () => {
+                                    var n_node = Manager.GetNode(node_id)
+                                    n_node.AddInput("Input", CreateAnyInput())
+                                }
+                            }, {
+                                title: "New output",
+                                function: () => {
+                                    var n_node = Manager.GetNode(node_id)
+                                    console.log(n_node)
+                                    n_node.AddOutput("Output", CreateAnyOutput())
+                                }
+                            })
+                        }
+
+                        views.push({
+                            title: "Input/Output", views: input_views
+                        })
+                    }
 
                     if (has_inputs) wires.views.push({
                         title: "Detach input wires",
                         function: () => {
-                            var node = NodeManager.GetNode(node_id)
+                            var node = Manager.GetNode(node_id)
                             Object.keys(node.inputs).forEach(i => {
-                                NodeManager.RemoveInputConnections(node.inputs[i])
+                                Manager.RemoveInputConnections(node.inputs[i])
                             })
                         }
                     })
                     if (has_outputs) wires.views.push({
                         title: "Detach output wires",
                         function: () => {
-                            var node = NodeManager.GetNode(node_id)
+                            var node = Manager.GetNode(node_id)
                             Object.keys(node.outputs).forEach(o => {
-                                NodeManager.RemoveInputConnections(node.outputs[o])
+                                Manager.RemoveInputConnections(node.outputs[o])
                             })
                         }
                     })
                     if (has_inputs && has_outputs) wires.views.push({
                         title: "Detach all wires",
                         function: () => {
-                            var node = NodeManager.GetNode(node_id)
+                            var node = Manager.GetNode(node_id)
                             Object.keys(node.inputs).forEach(i => {
-                                NodeManager.RemoveInputConnections(node.inputs[i])
+                                Manager.RemoveInputConnections(node.inputs[i])
                             })
                             Object.keys(node.outputs).forEach(o => {
-                                NodeManager.RemoveInputConnections(node.outputs[o])
+                                Manager.RemoveInputConnections(node.outputs[o])
                             })
                             // console.log(node)
                         }
                     })
                     if (has_inputs || has_outputs) views.push(wires)
 
-                    views.push({
-                        title: "Node",
-                        views: [{
-                            title: "Enter node",
-                            function: () => {
-                                // enter this node and enter edit mode
-                                // default nodes -> convert JS to uneditable nodes?
-                                // user created nodes -> enter node edit mode
-                            }
-                        }, {
-                            title: "Duplicate node",
-                            function: () => {
+                    if (node.internal == false)
+                        views.push({
+                            title: "Node",
+                            views: [{
+                                title: "Enter node",
+                                function: () => {
+                                    var inputs = CreateInternalInputsNode(node.inputs)
+                                    var outputs = CreateInternalOutputsNode(node.outputs)
 
-                            }
-                        }, {
-                            title: "Delete node",
-                            function: () => {
-                                NodeManager.DeleteNode(node_id)
-                            }
-                        }]
-                    })
+                                    // center of screen
+                                    var center = {
+                                        x: canvas.width / 2,
+                                        y: canvas.height / 2
+                                    }
+
+                                    inputs.position = {
+                                        x: center.x - 150 - inputs.scale.x,
+                                        y: center.y
+                                    }
+
+                                    outputs.position = {
+                                        x: center.x + 150,
+                                        y: center.y
+                                    }
+                                    // enter this node and enter edit mode
+                                    // default nodes -> convert JS to uneditable nodes?
+                                    // user created nodes -> enter node edit mode
+                                }
+                            }, {
+                                title: "Duplicate node",
+                                function: () => {
+
+                                }
+                            }, {
+                                title: "Delete node",
+                                function: () => {
+                                    Manager.DeleteNode(node_id)
+                                }
+                            }]
+                        })
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1169,14 +1210,14 @@
                         title: "Input/Output", views: [{
                             title: `New ${target.direction.toLowerCase()}`,
                             function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
-                                if (target.direction == "INPUT") n_node.AddInput("Input", NodeManager.CreateAnyInput())
-                                else n_node.AddOutput("Output", NodeManager.CreateAnyOutput())
+                                var n_node = Manager.GetNode(node_id)
+                                if (target.direction == "INPUT") n_node.AddInput("Input", CreateAnyInput())
+                                else n_node.AddOutput("Output", CreateAnyOutput())
                             }
                         }, {
                             title: "Duplicate this",
                             function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
+                                var n_node = Manager.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1186,13 +1227,13 @@
                                     return true
                                 })
 
-                                if (target.direction == "INPUT") n_node.AddInput(name, NodeManager.CreateAnyInput())
-                                else n_node.AddOutput(name, NodeManager.CreateAnyOutput())
+                                if (target.direction == "INPUT") n_node.AddInput(name, CreateAnyInput())
+                                else n_node.AddOutput(name, CreateAnyOutput())
                             }
                         }, {
                             title: "Delete this",
                             function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
+                                var n_node = Manager.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1204,10 +1245,10 @@
 
                                 switch (target.direction) {
                                     case "INPUT":
-                                        NodeManager.RemoveInputConnections(n_node[dir][name])
+                                        Manager.RemoveInputConnections(n_node[dir][name])
                                         break
                                     case "OUTPUT":
-                                        NodeManager.RemoveOutputConnections(n_node[dir][name])
+                                        Manager.RemoveOutputConnections(n_node[dir][name])
                                         break
                                 }
 
@@ -1225,7 +1266,7 @@
                         }, {
                             title: "Detach All Wires",
                             function: () => {
-                                var n_node = NodeManager.GetNode(node_id)
+                                var n_node = Manager.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1237,38 +1278,39 @@
 
                                 switch (target.direction) {
                                     case "INPUT":
-                                        NodeManager.RemoveInputConnections(n_node[dir][name])
+                                        Manager.RemoveInputConnections(n_node[dir][name])
                                         break
                                     case "OUTPUT":
-                                        NodeManager.RemoveOutputConnections(n_node[dir][name])
+                                        Manager.RemoveOutputConnections(n_node[dir][name])
                                         break
                                 }
-                                // NodeManager.RemoveInputConnections(node.outputs[o])
+                                // Manager.RemoveInputConnections(node.outputs[o])
                             }
                         }]
                     })
 
-                    views.push({
-                        title: "Node",
-                        views: [{
-                            title: "Enter node",
-                            function: () => {
-                                // enter this node and enter edit mode
-                                // default nodes -> convert JS to uneditable nodes?
-                                // user created nodes -> enter node edit mode
-                            }
-                        }, {
-                            title: "Duplicate node",
-                            function: () => {
+                    if (node.internal == false)
+                        views.push({
+                            title: "Node",
+                            views: [{
+                                title: "Enter node",
+                                function: () => {
+                                    // enter this node and enter edit mode
+                                    // default nodes -> convert JS to uneditable nodes?
+                                    // user created nodes -> enter node edit mode
+                                }
+                            }, {
+                                title: "Duplicate node",
+                                function: () => {
 
-                            }
-                        }, {
-                            title: "Delete node",
-                            function: () => {
-                                NodeManager.DeleteNode(node_id)
-                            }
-                        }]
-                    })
+                                }
+                            }, {
+                                title: "Delete node",
+                                function: () => {
+                                    Manager.DeleteNode(node_id)
+                                }
+                            }]
+                        })
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1287,14 +1329,14 @@
                     title: "Nodes", views: [{
                         title: "Create empty node",
                         function: () => {
-                            var n = NodeManager.CreateNode()
+                            var n = Manager.CreateNode()
                             n.execute = () => { }
                             n.position = pos
                         }
                     }, {
                         title: "Select all nodes",
                         function: () => {
-                            Mouse.selected = NodeManager.GetNodes()
+                            Mouse.selected = Manager.GetNodes()
                         }
                     }]
                 }]
@@ -1592,7 +1634,7 @@
         if (step && pause_execution) TogglePause()
         if (pause_execution) return
 
-        NodeManager.GetNodes().forEach(node => {
+        Manager.GetNodes().forEach(node => {
             // sum all non selection inputs
             var inputs = 0, outputs = 0
             Object.keys(node.inputs).forEach(l => {
@@ -1607,7 +1649,11 @@
             // if this node has zero inputs, but some outputs
             // OR if this node has any inputs and outputs
             if ((inputs == 0 && outputs > 0) || outputs > 0) {
-                node.execute()
+                try {
+                    node.execute()
+                } catch (err) {
+                    console.log(err)
+                }
                 redraw_nodes = true
             }
         })

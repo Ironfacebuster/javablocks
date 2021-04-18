@@ -1,13 +1,13 @@
-function CreateMathNode() {
-    var node = NodeManager.CreateNode("Math Functions", "A node containing various math functions.")
+function CreateMathFunctionsNode() {
+    var node = Manager.CreateNode("Math Functions", "A node containing various math functions.")
 
     node.default = true
     node.SetAccent("ffbb00")
 
-    node.AddInput("Mode", NodeManager.CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
-    var inp_a = node.AddInput("A", NodeManager.CreateNumberInput(0))
-    var inp_b = node.AddInput("B", NodeManager.CreateNumberInput(0))
-    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Mode", CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
+    var inp_a = node.AddInput("A", CreateNumberInput(0))
+    var inp_b = node.AddInput("B", CreateNumberInput(0))
+    var o = node.AddOutput("Output", CreateNumberOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -39,14 +39,14 @@ function CreateMathNode() {
     return node
 }
 
-function CreateNumberNode() {
-    var node = NodeManager.CreateNode("Static Numbers", "A node that contains various static numbers.")
+function CreateStaticNumberNode() {
+    var node = Manager.CreateNode("Static Numbers", "A node that contains various static numbers.")
 
     node.default = true
     node.SetAccent("ff6600")
 
-    node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var o = node.AddOutput("Output", CreateNumberOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -79,14 +79,14 @@ function CreateNumberNode() {
     return node
 }
 
-function CreateRandomNode() {
-    var node = NodeManager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
+function CreateRandomNumberNode() {
+    var node = Manager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
 
     node.default = true
     node.SetAccent("4444ff")
 
-    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var o = node.AddOutput("Output", CreateNumberOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -110,13 +110,13 @@ function CreateRandomNode() {
     return node
 }
 
-function CreateViewerNode() {
-    var node = NodeManager.CreateNode("Value Viewer", "A node that will display a value.")
+function CreateValueViewerNode() {
+    var node = Manager.CreateNode("Value Viewer", "A node that will display a value.")
 
     node.default = true
     node.SetAccent("4488ff")
-    node.AddInput("Input", NodeManager.CreateAnyInput())
-    node.AddOutput("Output", NodeManager.CreateNumberViewerOutput())
+    node.AddInput("Input", CreateAnyInput())
+    node.AddOutput("Output", CreateNumberViewerOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -129,16 +129,16 @@ function CreateViewerNode() {
     return node
 }
 
-function CreateOperationsNode() {
-    var node = NodeManager.CreateNode("Math Operations", "A node that performs various math operations.")
+function CreateMathOperationsNode() {
+    var node = Manager.CreateNode("Math Operations", "A node that performs various math operations.")
 
     node.default = true
     node.SetAccent("dd00ff")
 
-    node.AddInput("Mode", NodeManager.CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
-    var inp_a = node.AddInput("A", NodeManager.CreateNumberInput(0))
-    var inp_b = node.AddInput("B", NodeManager.CreateNumberInput(0))
-    var o = node.AddOutput("Output", NodeManager.CreateNumberOutput())
+    node.AddInput("Mode", CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
+    var inp_a = node.AddInput("A", CreateNumberInput(0))
+    var inp_b = node.AddInput("B", CreateNumberInput(0))
+    var o = node.AddOutput("Output", CreateNumberOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -181,24 +181,52 @@ function CreateOperationsNode() {
     return node
 }
 
-function CreateIfNode() {
-    var node = NodeManager.CreateNode("Comparison", "A node that compares two inputs.")
+function TypeToInput(type) {
+    switch (type) {
+        case "Boolean":
+            return CreateBoolInput
+        case "Number":
+            return CreateNumberInput
+        case "Array":
+            return CreateArrayInput
+        case "Any":
+            return CreateAnyInput
+        default:
+            return CreateAnyInput
+    }
+}
 
-    node.default = true
-    node.SetAccent("ff2200")
+function TypeToOutput(type, default_value) {
+    console.log(Manager)
+    switch (type) {
+        case "Boolean":
+            return CreateBoolOutput(default_value)
+        case "Number":
+            return CreateNumberOutput(default_value)
+        case "Array":
+            return CreateArrayOutput(default_value)
+        default:
+            return CreateAnyOutput(default_value)
+    }
+}
 
-    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in1 = node.AddInput("A", NodeManager.CreateAnyInput())
-    var in2 = node.AddInput("B", NodeManager.CreateAnyInput())
-    var o = node.AddOutput("Output", NodeManager.CreateBoolOutput())
+function CreateInternalInputsNode(inputs) {
+    var node = Manager.CreateNode("Inputs", "An internal node.")
+
+    node.default = false
+    node.internal = true
+    node.internal_type = "INPUT"
+    node.SetAccent("ffffff")
+
+    Object.keys(inputs).forEach(name => {
+        node.default = inputs[name].parent.default
+        node.AddOutput(name, TypeToOutput(inputs[name].type, inputs[name].default_value))
+    })
 
     node.execute = (finished) => {
         finished = finished || []
         if (finished.indexOf(node.id) != -1) return
         finished.push(node.id)
-
-        if (in1.value == in2.value) o.value = true
-        else o.value = false
 
         for (var k in node.outputs) {
             var output = node.outputs[k]
@@ -215,17 +243,89 @@ function CreateIfNode() {
     return node
 }
 
-function CreateSwitchNode() {
-    var node = NodeManager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
+function CreateInternalOutputsNode(outputs) {
+    var node = Manager.CreateNode("Outputs", "An internal node.")
+
+    // allow adding and removing nodes (update parent node)
+    node.default = false
+    node.internal = true
+    node.internal_type = "OUTPUT"
+    node.SetAccent("ffffff")
+
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    Object.keys(outputs).forEach(name => {
+        node.default = outputs[name].parent.default
+        node.AddInput(name, TypeToInput(outputs[name].type)(outputs[name].default_value))
+    })
+
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+    }
+
+    return node
+}
+
+function CreateComparisonNode() {
+    var node = Manager.CreateNode("Comparison", "A node that compares two inputs.")
+
+    node.default = true
+    node.SetAccent("ff2200")
+
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var mode = node.AddInput("Mode", CreateSelectionInput(["==", ">", ">="]))
+    var in1 = node.AddInput("A", CreateNumberInput())
+    var in2 = node.AddInput("B", CreateNumberInput())
+    var o = node.AddOutput("Output", CreateBoolOutput())
+
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
+        const act = node.inputs["Mode"].currentView.name
+        o.value = false
+
+        switch (act) {
+            case "==":
+                if (in1.value == in2.value) o.value = true
+                break
+            case ">=":
+                if (in1.value >= in2.value) o.value = true
+                break
+            case ">":
+                if (in1.value > in2.value) o.value = true
+                break
+        }
+
+
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
+            if (output.connections.length > 0)
+                output.connections.forEach(con => {
+                    // console.log(con)
+                    con.value = output.value
+                    if (finished.indexOf(con.parent.id) == -1)
+                        con.parent.execute(finished)
+                })
+        }
+    }
+
+    return node
+}
+
+function CreatePredicateNode() {
+    var node = Manager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
     node.default = true
     node.SetAccent("ff8888")
 
-    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in2 = node.AddInput("A", NodeManager.CreateAnyInput())
-    var in3 = node.AddInput("B", NodeManager.CreateAnyInput())
-    var in1 = node.AddInput("Predicate", NodeManager.CreateBoolInput())
-    var o = node.AddOutput("Output", NodeManager.CreateAnyOutput())
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in2 = node.AddInput("A", CreateAnyInput())
+    var in3 = node.AddInput("B", CreateAnyInput())
+    var in1 = node.AddInput("Predicate", CreateBoolInput())
+    var o = node.AddOutput("Output", CreateAnyOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -249,15 +349,15 @@ function CreateSwitchNode() {
     return node
 }
 
-function CreateInverterNode() {
-    var node = NodeManager.CreateNode("Bool Inverter", "A node that inverts its input.")
+function CreateBoolInverterNode() {
+    var node = Manager.CreateNode("Bool Inverter", "A node that inverts its input.")
 
     node.default = true
     node.SetAccent("ff6655")
 
-    // node.AddInput("Value", NodeManager.CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
-    var in1 = node.AddInput("Input", NodeManager.CreateBoolInput())
-    var o = node.AddOutput("Output", NodeManager.CreateBoolOutput())
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var in1 = node.AddInput("Input", CreateBoolInput())
+    var o = node.AddOutput("Output", CreateBoolOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -282,15 +382,15 @@ function CreateInverterNode() {
 }
 
 function CreateObjectKeyNode() {
-    var node = NodeManager.CreateNode("Object Key", "A node that accesses a key from an object.")
+    var node = Manager.CreateNode("Object Key", "A node that accesses a key from an object.")
 
     node.default = true
     node.SetAccent("44aaee")
 
-    var in1 = node.AddInput("Input", NodeManager.CreateObjectInput())
+    var in1 = node.AddInput("Input", CreateObjectInput())
     // change this to a user string input
-    var in2 = node.AddInput("Key", NodeManager.CreateSelectionInput())
-    var o = node.AddOutput("Output", NodeManager.CreateAnyOutput())
+    var in2 = node.AddInput("Key", CreateSelectionInput())
+    var o = node.AddOutput("Output", CreateAnyOutput())
 
     node.execute = (finished) => {
         finished = finished || []
@@ -315,16 +415,16 @@ function CreateObjectKeyNode() {
 }
 
 function CreateObjectNode() {
-    var node = NodeManager.CreateNode("Object", "A node that accesses a key from an object.")
+    var node = Manager.CreateNode("Object", "A node contains an object.")
 
     node.default = true
     node.SetAccent("4466ee")
     var obj = {}
 
-    // var in1 = node.AddInput("Input", NodeManager.CreateObjectInput())
+    // var in1 = node.AddInput("Input", CreateObjectInput())
     // change this to a user string input
-    var in1 = node.AddInput("Key", NodeManager.CreateSelectionInput())
-    var o = node.AddOutput("Output", NodeManager.CreateObjectOutput())
+    var in1 = node.AddInput("Key", CreateSelectionInput())
+    var o = node.AddOutput("Output", CreateObjectOutput())
 
     node.execute = (finished) => {
         finished = finished || []
