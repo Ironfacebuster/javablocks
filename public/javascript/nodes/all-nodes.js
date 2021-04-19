@@ -197,7 +197,6 @@ function TypeToInput(type) {
 }
 
 function TypeToOutput(type) {
-    console.log(Manager)
     switch (type) {
         case "Boolean":
             return CreateBoolOutput
