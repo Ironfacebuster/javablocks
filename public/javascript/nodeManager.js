@@ -28,7 +28,6 @@ class NodeManager {
         const index = this.nodes.findIndex((n) => {
             return n.id == id
         })
-        console.log(index)
         return this.nodes[index]
     }
 
@@ -42,23 +41,18 @@ class NodeManager {
         if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
 
         var node = this.GetNode(id)
-        console.log(nodes)
+
         // clean up connections
         Object.keys(node.inputs).forEach((i) => {
-            console.log(i, node.inputs[i])
             this.RemoveInputConnections(node.inputs[i])
         })
         Object.keys(node.outputs).forEach((o) => {
             this.RemoveOutputConnections(node.outputs[o])
         })
 
-        console.log(index, nodes.length - 1)
-
         if (index == 0) nodes.shift()
         else if (index == nodes.length - 1) nodes.pop()
         else nodes.splice(index, 1)
-
-        console.log(nodes)
 
         console.log(`Deleted node (id ${id})`)
     }
@@ -116,6 +110,7 @@ class NodeManager {
 
 class Node {
     context
+    InternalManager
     type = "Node"
     id = "no id"
     name = "Unnamed Node"
@@ -141,7 +136,7 @@ class Node {
 
         this.zindex = context.GetNodes().length > 0 ? context.GetNodes()[0].zindex + 1 : 0, this.context = context
         this.id = GenerateID(16)
-        this.Manager = new NodeManager()
+        this.InternalManager = new NodeManager()
     }
 
     AddInput(title, input) {
@@ -225,6 +220,35 @@ class Node {
         this.scale = scale
 
         return this
+    }
+
+    Duplicate() {
+        // create duplicate of this node
+        var clone = new Node(this.context)
+
+        clone.name = this.name + ""
+        clone.description = this.description + ""
+        clone.position = {
+            x: this.position.x + 0,
+            y: this.position.y + 0
+        }
+        clone.scale = {
+            x: this.scale.x + 0,
+            y: this.scale.y + 0
+        }
+        clone.SetAccent(this.accent)
+        clone.execute = this.execute
+
+        // duplicate input
+        Object.keys(this.inputs).forEach(key => {
+            clone.AddInput(key, TypeToInput(this.inputs[key].type)(this.inputs[key].default_value))
+        })
+        // duplicate outputs
+        Object.keys(this.outputs).forEach(key => {
+            clone.AddOutput(key, TypeToOutput(this.outputs[key].type)(this.outputs[key].default_value))
+        })
+
+        return clone
     }
 }
 
@@ -327,7 +351,6 @@ function CreateSelectionInput(views) {
 function CreateNumberInput(default_value) {
     default_value = default_value || 0
 
-    console.log(this)
     var input = this.CreateInput()
 
     input.type = "Number"
