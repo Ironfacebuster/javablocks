@@ -1014,8 +1014,6 @@
                     ClearMouseSelection()
                 } else if (Mouse.target.type == "ContextMenuItem") {
                     // if hovering over a context menu item
-                    // console.log(Mouse.target)
-                    console.log("CONTEXT MENU")
                     if (Mouse.target.hasOwnProperty("function") && typeof Mouse.target.function != "undefined")
                         Mouse.target.function(), CloseMenuOverlay()
 
@@ -1073,8 +1071,6 @@
 
                     const has_inputs = Object.keys(node.GetInputs()).length != 0
                     const has_outputs = Object.keys(node.GetOutputs()).length != 0
-
-                    console.log(has_inputs, has_outputs)
 
                     var wires = {
                         title: "Wires",
@@ -1161,8 +1157,8 @@
                             views: [{
                                 title: "Enter node",
                                 function: () => {
-                                    var inputs = CreateInternalInputsNode(node.inputs)
-                                    var outputs = CreateInternalOutputsNode(node.outputs)
+                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
 
                                     // center of screen
                                     var center = {
@@ -1183,12 +1179,20 @@
                                     // default nodes -> convert JS to uneditable nodes?
                                     // user created nodes -> enter node edit mode
                                 }
-                            }, {
-                                title: "Duplicate node",
-                                function: () => {
+                            },
+                            // {
+                            //     title: "Duplicate node",
+                            //     function: () => {
 
-                                }
-                            }, {
+                            //         const clone = node.Duplicate()
+                            //         clone.position.x += 10
+                            //         clone.position.y += 10
+
+                            //         node.context.nodes.push(clone)
+
+                            //     }
+                            // }, 
+                            {
                                 title: "Delete node",
                                 function: () => {
                                     Manager.DeleteNode(node_id)
@@ -1302,12 +1306,14 @@
                                     // default nodes -> convert JS to uneditable nodes?
                                     // user created nodes -> enter node edit mode
                                 }
-                            }, {
-                                title: "Duplicate node",
-                                function: () => {
+                            },
+                            // {
+                            //     title: "Duplicate node",
+                            //     function: () => {
 
-                                }
-                            }, {
+                            //     }
+                            // }, 
+                            {
                                 title: "Delete node",
                                 function: () => {
                                     Manager.DeleteNode(node_id)
