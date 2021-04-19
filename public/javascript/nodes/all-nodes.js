@@ -196,22 +196,23 @@ function TypeToInput(type) {
     }
 }
 
-function TypeToOutput(type, default_value) {
+function TypeToOutput(type) {
     console.log(Manager)
     switch (type) {
         case "Boolean":
-            return CreateBoolOutput(default_value)
+            return CreateBoolOutput
         case "Number":
-            return CreateNumberOutput(default_value)
+            return CreateNumberOutput
         case "Array":
-            return CreateArrayOutput(default_value)
+            return CreateArrayOutput
         default:
-            return CreateAnyOutput(default_value)
+            return CreateAnyOutput
     }
 }
 
-function CreateInternalInputsNode(inputs) {
-    var node = Manager.CreateNode("Inputs", "An internal node.")
+function CreateInternalInputsNode(inputs, context) {
+    context = context || Manager
+    var node = context.CreateNode("Inputs", "An internal node.")
 
     node.default = false
     node.internal = true
@@ -220,7 +221,7 @@ function CreateInternalInputsNode(inputs) {
 
     Object.keys(inputs).forEach(name => {
         node.default = inputs[name].parent.default
-        node.AddOutput(name, TypeToOutput(inputs[name].type, inputs[name].default_value))
+        node.AddOutput(name, TypeToOutput(inputs[name].type)(inputs[name].default_value))
     })
 
     node.execute = (finished) => {
@@ -243,8 +244,9 @@ function CreateInternalInputsNode(inputs) {
     return node
 }
 
-function CreateInternalOutputsNode(outputs) {
-    var node = Manager.CreateNode("Outputs", "An internal node.")
+function CreateInternalOutputsNode(outputs, context) {
+    context = context || Manager
+    var node = context.CreateNode("Outputs", "An internal node.")
 
     // allow adding and removing nodes (update parent node)
     node.default = false
