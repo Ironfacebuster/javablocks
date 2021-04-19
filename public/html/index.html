@@ -83,7 +83,8 @@
         selecting: false,
         slicing: false
     }
-
+    context_path = [Manager]
+    CurrentContext = Manager
     var startX = 25,
         startY = 25
 
@@ -279,8 +280,8 @@
         node.MarkDirty(false)
     }
 
-    function DrawNodeConnections() {
-        Manager.GetNodes().forEach(node => {
+    function DrawNodeConnections(context) {
+        context.GetNodes().forEach(node => {
             // draw this output's connections
             Object.keys(node.outputs).forEach(output => {
                 if (node.outputs[output].hasOwnProperty("connections"))
@@ -659,7 +660,7 @@
                 return true
             })
         }
-        else Manager.GetNodes().every(node => {
+        else CurrentContext.GetNodes().every(node => {
             var t = CheckPointInNode(node, point)
 
             if (typeof t != "undefined") {
@@ -844,14 +845,15 @@
         active: false
     }
     function UpdateAndDrawNodes() {
+        context = CurrentContext || Manager
         ClearCanvas()
 
-        DrawNodeConnections()
+        DrawNodeConnections(context)
 
         // Manager.GetNodes().forEach(node => {
         //     DrawNode(node)
         // })
-        var nodes = Manager.GetNodes()
+        var nodes = context.GetNodes()
         for (var i = nodes.length - 1; i >= 0; --i) {
             // if (nodes[i].isDirty())
             DrawNode(nodes[i])
@@ -900,7 +902,7 @@
                 Mouse.slicing = false
 
                 // check all wires for intersections
-                Manager.GetNodes().forEach(node => {
+                CurrentContext.GetNodes().forEach(node => {
                     if (Object.keys(node.outputs).length > 0)
                         Object.keys(node.outputs).forEach(o => {
                             // bezier curve will be calculated with low resolution for speed
@@ -960,7 +962,7 @@
                 console.log("SLICED", sliced_connections)
 
                 sliced_connections.forEach(con => {
-                    Manager.RemoveOutputConnection(con.base, con.connection)
+                    CurrentContext.RemoveOutputConnection(con.base, con.connection)
                 })
 
                 UpdateAndDrawNodes()
@@ -982,7 +984,7 @@
 
                 var selected = []
 
-                Manager.GetNodes().forEach(node => {
+                CurrentContext.GetNodes().forEach(node => {
                     var inSelection = false
                     var minX = node.position.x,
                         maxX = node.position.x + node.scale.x
@@ -1084,7 +1086,7 @@
                                 input_views.push({
                                     title: "New input",
                                     function: () => {
-                                        var n_node = Manager.GetNode(node_id)
+                                        var n_node = CurrentContext.GetNode(node_id)
                                         n_node.AddOutput("Input", CreateAnyOutput())
                                     }
                                 })
@@ -1092,7 +1094,7 @@
                                 input_views.push({
                                     title: "New output",
                                     function: () => {
-                                        var n_node = Manager.GetNode(node_id)
+                                        var n_node = CurrentContext.GetNode(node_id)
                                         n_node.AddInput("Output", CreateAnyInput())
                                     }
                                 })
@@ -1100,13 +1102,13 @@
                             input_views.push({
                                 title: "New input",
                                 function: () => {
-                                    var n_node = Manager.GetNode(node_id)
+                                    var n_node = CurrentContext.GetNode(node_id)
                                     n_node.AddInput("Input", CreateAnyInput())
                                 }
                             }, {
                                 title: "New output",
                                 function: () => {
-                                    var n_node = Manager.GetNode(node_id)
+                                    var n_node = CurrentContext.GetNode(node_id)
                                     console.log(n_node)
                                     n_node.AddOutput("Output", CreateAnyOutput())
                                 }
@@ -1121,30 +1123,30 @@
                     if (has_inputs) wires.views.push({
                         title: "Detach input wires",
                         function: () => {
-                            var node = Manager.GetNode(node_id)
+                            var node = CurrentContext.GetNode(node_id)
                             Object.keys(node.inputs).forEach(i => {
-                                Manager.RemoveInputConnections(node.inputs[i])
+                                CurrentContext.RemoveInputConnections(node.inputs[i])
                             })
                         }
                     })
                     if (has_outputs) wires.views.push({
                         title: "Detach output wires",
                         function: () => {
-                            var node = Manager.GetNode(node_id)
+                            var node = CurrentContext.GetNode(node_id)
                             Object.keys(node.outputs).forEach(o => {
-                                Manager.RemoveInputConnections(node.outputs[o])
+                                CurrentContext.RemoveInputConnections(node.outputs[o])
                             })
                         }
                     })
                     if (has_inputs && has_outputs) wires.views.push({
                         title: "Detach all wires",
                         function: () => {
-                            var node = Manager.GetNode(node_id)
+                            var node = CurrentContext.GetNode(node_id)
                             Object.keys(node.inputs).forEach(i => {
-                                Manager.RemoveInputConnections(node.inputs[i])
+                                CurrentContext.RemoveInputConnections(node.inputs[i])
                             })
                             Object.keys(node.outputs).forEach(o => {
-                                Manager.RemoveInputConnections(node.outputs[o])
+                                CurrentContext.RemoveInputConnections(node.outputs[o])
                             })
                             // console.log(node)
                         }
@@ -1157,24 +1159,32 @@
                             views: [{
                                 title: "Enter node",
                                 function: () => {
-                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
-                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
+                                    if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
+                                        var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+                                        var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
 
-                                    // center of screen
-                                    var center = {
-                                        x: canvas.width / 2,
-                                        y: canvas.height / 2
+                                        // center of screen
+                                        var center = {
+                                            x: canvas.width / 2,
+                                            y: canvas.height / 2
+                                        }
+
+                                        inputs.position = {
+                                            x: center.x - 150 - inputs.scale.x,
+                                            y: center.y
+                                        }
+
+                                        outputs.position = {
+                                            x: center.x + 150,
+                                            y: center.y
+                                        }
+
+                                        node.InternalManager.internal_nodes_created = true
                                     }
 
-                                    inputs.position = {
-                                        x: center.x - 150 - inputs.scale.x,
-                                        y: center.y
-                                    }
+                                    context_path.push(node.InternalManager)
+                                    CurrentContext = node.InternalManager
 
-                                    outputs.position = {
-                                        x: center.x + 150,
-                                        y: center.y
-                                    }
                                     // enter this node and enter edit mode
                                     // default nodes -> convert JS to uneditable nodes?
                                     // user created nodes -> enter node edit mode
@@ -1195,7 +1205,7 @@
                             {
                                 title: "Delete node",
                                 function: () => {
-                                    Manager.DeleteNode(node_id)
+                                    CurrentContext.DeleteNode(node_id)
                                 }
                             }]
                         })
@@ -1217,14 +1227,14 @@
                         title: "Input/Output", views: [{
                             title: `New ${target.direction.toLowerCase()}`,
                             function: () => {
-                                var n_node = Manager.GetNode(node_id)
+                                var n_node = CurrentContext.GetNode(node_id)
                                 if (target.direction == "INPUT") n_node.AddInput("Input", CreateAnyInput())
                                 else n_node.AddOutput("Output", CreateAnyOutput())
                             }
                         }, {
                             title: "Duplicate this",
                             function: () => {
-                                var n_node = Manager.GetNode(node_id)
+                                var n_node = CurrentContext.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1240,7 +1250,7 @@
                         }, {
                             title: "Delete this",
                             function: () => {
-                                var n_node = Manager.GetNode(node_id)
+                                var n_node = CurrentContext.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1252,10 +1262,10 @@
 
                                 switch (target.direction) {
                                     case "INPUT":
-                                        Manager.RemoveInputConnections(n_node[dir][name])
+                                        CurrentContext.RemoveInputConnections(n_node[dir][name])
                                         break
                                     case "OUTPUT":
-                                        Manager.RemoveOutputConnections(n_node[dir][name])
+                                        CurrentContext.RemoveOutputConnections(n_node[dir][name])
                                         break
                                 }
 
@@ -1273,7 +1283,7 @@
                         }, {
                             title: "Detach All Wires",
                             function: () => {
-                                var n_node = Manager.GetNode(node_id)
+                                var n_node = CurrentContext.GetNode(node_id)
                                 const dir = target.direction.toLowerCase() + "s"
 
                                 var name = target.direction.toLowerCase()
@@ -1285,13 +1295,13 @@
 
                                 switch (target.direction) {
                                     case "INPUT":
-                                        Manager.RemoveInputConnections(n_node[dir][name])
+                                        CurrentContext.RemoveInputConnections(n_node[dir][name])
                                         break
                                     case "OUTPUT":
-                                        Manager.RemoveOutputConnections(n_node[dir][name])
+                                        CurrentContext.RemoveOutputConnections(n_node[dir][name])
                                         break
                                 }
-                                // Manager.RemoveInputConnections(node.outputs[o])
+                                // CurrentContext.RemoveInputConnections(node.outputs[o])
                             }
                         }]
                     })
@@ -1316,7 +1326,7 @@
                             {
                                 title: "Delete node",
                                 function: () => {
-                                    Manager.DeleteNode(node_id)
+                                    CurrentContext.DeleteNode(node_id)
                                 }
                             }]
                         })
@@ -1338,14 +1348,14 @@
                     title: "Nodes", views: [{
                         title: "Create empty node",
                         function: () => {
-                            var n = Manager.CreateNode()
+                            var n = CurrentContext.CreateNode()
                             n.execute = () => { }
                             n.position = pos
                         }
                     }, {
                         title: "Select all nodes",
                         function: () => {
-                            Mouse.selected = Manager.GetNodes()
+                            Mouse.selected = CurrentContext.GetNodes()
                         }
                     }]
                 }]
@@ -1621,8 +1631,28 @@
     }
     */
 
+    window.addEventListener("keyup", (e) => {
+        if (event.isComposing || event.keyCode === 229)
+            return
+
+        // escape
+        if (e.keyCode == 27) {
+            // if context_path has more than one entry
+            if (context_path.length > 1) {
+                // remove the most recently added "context"
+                context_path.pop()
+                CurrentContext = context_path[context_path.length - 1]
+
+                UpdateAndDrawNodes()
+            } else if (CurrentContext != Manager) {
+                CurrentContext = Manager
+                UpdateAndDrawNodes()
+            }
+        }
+    })
+
     // prevent default canvas context menu
-    canvas.addEventListener('contextmenu', function (e) {
+    canvas.addEventListener('contextmenu', (e) => {
         if (e.button == 2)
             e.preventDefault()
     })
@@ -1643,7 +1673,7 @@
         if (step && pause_execution) TogglePause()
         if (pause_execution) return
 
-        Manager.GetNodes().forEach(node => {
+        CurrentContext.GetNodes().forEach(node => {
             // sum all non selection inputs
             var inputs = 0, outputs = 0
             Object.keys(node.inputs).forEach(l => {
