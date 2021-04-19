@@ -1,5 +1,5 @@
 function CreateMathFunctionsNode() {
-    var node = Manager.CreateNode("Math Functions", "A node containing various math functions.")
+    var node = CurrentContext.CreateNode("Math Functions", "A node containing various math functions.")
 
     node.default = true
     node.SetAccent("ffbb00")
@@ -40,7 +40,7 @@ function CreateMathFunctionsNode() {
 }
 
 function CreateStaticNumberNode() {
-    var node = Manager.CreateNode("Static Numbers", "A node that contains various static numbers.")
+    var node = CurrentContext.CreateNode("Static Numbers", "A node that contains various static numbers.")
 
     node.default = true
     node.SetAccent("ff6600")
@@ -80,7 +80,7 @@ function CreateStaticNumberNode() {
 }
 
 function CreateRandomNumberNode() {
-    var node = Manager.CreateNode("Random Number", "A node that generates a random number between zero and one.")
+    var node = CurrentContext.CreateNode("Random Number", "A node that generates a random number between zero and one.")
 
     node.default = true
     node.SetAccent("4444ff")
@@ -111,7 +111,7 @@ function CreateRandomNumberNode() {
 }
 
 function CreateValueViewerNode() {
-    var node = Manager.CreateNode("Value Viewer", "A node that will display a value.")
+    var node = CurrentContext.CreateNode("Value Viewer", "A node that will display a value.")
 
     node.default = true
     node.SetAccent("4488ff")
@@ -130,7 +130,7 @@ function CreateValueViewerNode() {
 }
 
 function CreateMathOperationsNode() {
-    var node = Manager.CreateNode("Math Operations", "A node that performs various math operations.")
+    var node = CurrentContext.CreateNode("Math Operations", "A node that performs various math operations.")
 
     node.default = true
     node.SetAccent("dd00ff")
@@ -210,7 +210,7 @@ function TypeToOutput(type) {
 }
 
 function CreateInternalInputsNode(inputs, context) {
-    context = context || Manager
+    context = context || CurrentContext
     var node = context.CreateNode("Inputs", "An internal node.")
 
     node.default = false
@@ -244,7 +244,7 @@ function CreateInternalInputsNode(inputs, context) {
 }
 
 function CreateInternalOutputsNode(outputs, context) {
-    context = context || Manager
+    context = context || CurrentContext
     var node = context.CreateNode("Outputs", "An internal node.")
 
     // allow adding and removing nodes (update parent node)
@@ -269,7 +269,7 @@ function CreateInternalOutputsNode(outputs, context) {
 }
 
 function CreateComparisonNode() {
-    var node = Manager.CreateNode("Comparison", "A node that compares two inputs.")
+    var node = CurrentContext.CreateNode("Comparison", "A node that compares two inputs.")
 
     node.default = true
     node.SetAccent("ff2200")
@@ -317,7 +317,7 @@ function CreateComparisonNode() {
 }
 
 function CreatePredicateNode() {
-    var node = Manager.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
+    var node = CurrentContext.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
     node.default = true
     node.SetAccent("ff8888")
@@ -351,7 +351,7 @@ function CreatePredicateNode() {
 }
 
 function CreateBoolInverterNode() {
-    var node = Manager.CreateNode("Bool Inverter", "A node that inverts its input.")
+    var node = CurrentContext.CreateNode("Bool Inverter", "A node that inverts its input.")
 
     node.default = true
     node.SetAccent("ff6655")
@@ -383,7 +383,7 @@ function CreateBoolInverterNode() {
 }
 
 function CreateObjectKeyNode() {
-    var node = Manager.CreateNode("Object Key", "A node that accesses a key from an object.")
+    var node = CurrentContext.CreateNode("Object Key", "A node that accesses a key from an object.")
 
     node.default = true
     node.SetAccent("44aaee")
@@ -416,7 +416,7 @@ function CreateObjectKeyNode() {
 }
 
 function CreateObjectNode() {
-    var node = Manager.CreateNode("Object", "A node contains an object.")
+    var node = CurrentContext.CreateNode("Object", "A node contains an object.")
 
     node.default = true
     node.SetAccent("4466ee")
