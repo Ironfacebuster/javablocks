@@ -67,6 +67,7 @@ class NodeManager {
         if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
 
         var node = this.GetNode(id)
+        if (node.internal) return
 
         // clean up connections
         Object.keys(node.inputs).forEach((i) => {

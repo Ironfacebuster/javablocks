@@ -207,15 +207,19 @@
 
         // draw outside w/ accent
         var acc = node.accent
-        var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, 0.5)`
+        acc.a = 128
+        if (fast_mode) acc = acc.divide(2), acc.a = 255
+        var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, ${acc.a / 255})`
         ctx.fillStyle = rgba_accent
         ctx.strokeStyle = rgba_accent
         roundRect(ctx, position.x, position.y, scale.x, scale.y, 5, true, false)
 
-        const accentWidth = 5
-        ctx.fillStyle = "rgba(1,1,1,0.5)"
-        ctx.strokeStyle = "rgba(1,1,1,0.5)"
-        roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
+        if (!fast_mode) {
+            const accentWidth = 5
+            ctx.fillStyle = "rgba(1,1,1,0.5)"
+            ctx.strokeStyle = "rgba(1,1,1,0.5)"
+            roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
+        }
 
         if (Array.isArray(Mouse.selected) && Mouse.selected.findIndex((n) => { return n.id == node.id }) >= 0) {
             // outline this node
@@ -794,6 +798,7 @@
             })
 
             Object.keys(outputs).every((k, i) => {
+                if (outputs[k].type == "Viewer") return
                 // calc y level
                 var y = pos.y + (20 + (i * 25)) - 12
 
