@@ -37,6 +37,8 @@ class NodeManager {
         // NodeManager keeps track of this node.
         this.nodes.push(node)
 
+        console.log(`Created node (id ${node.id})`)
+
         return node
     }
 
