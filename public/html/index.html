@@ -104,6 +104,7 @@
         },
         dragging: false,
         selecting: false,
+        selected: [],
         slicing: false
     }
     context_path = [Manager]
@@ -914,7 +915,7 @@
         var no_update = false
 
         if (e.button == 0) {
-            if (!Mouse.dragging) ClearMouseSelection(true)
+            if (!Mouse.dragging) ClearMouseSelection(!MenuOverlay.active)
 
             if (Mouse.slicing) {
                 var sliced_connections = []
@@ -1207,28 +1208,27 @@
 
                                 context_path.push(node.InternalManager)
                                 CurrentContext = node.InternalManager
-
-                                // enter this node and enter edit mode
-                                // default nodes -> convert JS to uneditable nodes?
-                                // user created nodes -> enter node edit mode
-                            }
-                        }, {
-                            title: "Delete node",
-                            function: () => {
-                                CurrentContext.DeleteNode(node_id)
                             }
                         }, {
                             title: "Rename node",
                             function: () => { }
+                        }, {
+                            title: "Delete node",
+                            function: () => {
+                                if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                                else CurrentContext.DeleteNode(node_id)
+                            }
                         })
-                    else node_views.views.push({
+                    else if (node.internal == false) node_views.views.push({
                         title: "Delete node",
                         function: () => {
-                            CurrentContext.DeleteNode(node_id)
+                            if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                            else CurrentContext.DeleteNode(node_id)
                         }
                     })
 
-                    views.push(node_views)
+                    if (node.internal == false)
+                        views.push(node_views)
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1360,28 +1360,27 @@
 
                                 context_path.push(node.InternalManager)
                                 CurrentContext = node.InternalManager
-
-                                // enter this node and enter edit mode
-                                // default nodes -> convert JS to uneditable nodes?
-                                // user created nodes -> enter node edit mode
-                            }
-                        }, {
-                            title: "Delete node",
-                            function: () => {
-                                CurrentContext.DeleteNode(node_id)
                             }
                         }, {
                             title: "Rename node",
                             function: () => { }
+                        }, {
+                            title: "Delete node",
+                            function: () => {
+                                if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                                else CurrentContext.DeleteNode(node_id)
+                            }
                         })
                     else node_views.views.push({
                         title: "Delete node",
                         function: () => {
-                            CurrentContext.DeleteNode(node_id)
+                            if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                            else CurrentContext.DeleteNode(node_id)
                         }
                     })
 
-                    views.push(node_views)
+                    if (node.internal == false)
+                        views.push(node_views)
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1627,10 +1626,24 @@
         return false
     }
 
-    window.addEventListener("keyup", (e) => {
+    window.addEventListener("keydown", (e) => {
         if (event.isComposing || event.keyCode === 229)
             return
 
+        // keydown to make hotkeys feel more responsive
+        if (e.ctrlKey && e.keyCode == 65) {
+            // CTRL+A = select all
+            Mouse.selected = CurrentContext.GetNodes()
+            console.log("SELECTED", Mouse.selected)
+
+            UpdateAndDrawNodes()
+
+            e.preventDefault()
+            return false
+        }
+    })
+
+    window.addEventListener("keyup", (e) => {
         // escape
         if (e.keyCode == 27) {
             // if context_path has more than one entry
