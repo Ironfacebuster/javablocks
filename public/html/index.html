@@ -871,9 +871,6 @@
 
         DrawNodeConnections(context)
 
-        // Manager.GetNodes().forEach(node => {
-        //     DrawNode(node)
-        // })
         var nodes = context.GetNodes()
         for (var i = nodes.length - 1; i >= 0; --i) {
             // if (nodes[i].isDirty())
@@ -1066,7 +1063,7 @@
             if (!Mouse.buttons[e.button]) Mouse.dragging = false, dragOffset = undefined, Mouse.target = undefined
             if (making_connection) {
                 // complete the connections
-                console.log(con1, con2)
+                console.log("CONNECTING", con1.id, "AND", con2.id)
                 if (con1.direction == "OUTPUT" && con2.connections.length == 0)
                     con1.connections.push(con2), con2.connections.push(con1)
                 else if (con2.direction == "OUTPUT" && con1.connections.length == 0)
@@ -1082,8 +1079,9 @@
             CloseMenuOverlay()
             UpdateAndDrawNodes()
             Mouse.target = GetOverlappedNode(Mouse.position)
+
             if (typeof Mouse.target != "undefined") {
-                let node = Mouse.target.parent || Mouse.target
+                let node = Mouse.target.type == "Node" ? Mouse.target : Mouse.target.parent
                 let node_id = node.id
                 // right clicked on something
                 if (Mouse.target.type == "Node") {
@@ -1108,7 +1106,8 @@
                                     title: "New input",
                                     function: () => {
                                         var n_node = CurrentContext.GetNode(node_id)
-                                        n_node.AddOutput("Input", CreateAnyOutput())
+                                        var input = n_node.AddOutput("Input", CreateAnyOutput())
+                                        n_node.parent.AddInput("Input", CreateAnyInput())
                                     }
                                 })
                             if (node.internal_type == "OUTPUT")
@@ -1116,7 +1115,8 @@
                                     title: "New output",
                                     function: () => {
                                         var n_node = CurrentContext.GetNode(node_id)
-                                        n_node.AddInput("Output", CreateAnyInput())
+                                        var output = n_node.AddInput("Output", CreateAnyInput())
+                                        n_node.parent.AddOutput("Output", CreateAnyOutput())
                                     }
                                 })
                         } else {
@@ -1124,14 +1124,19 @@
                                 title: "New input",
                                 function: () => {
                                     var n_node = CurrentContext.GetNode(node_id)
-                                    n_node.AddInput("Input", CreateAnyInput())
+                                    var input = n_node.AddInput("Input", CreateAnyInput())
+
+                                    if (n_node.hasOwnProperty("internal_inputs"))
+                                        node.internal_inputs.AddOutput("Input", CreateAnyOutput())
                                 }
                             }, {
                                 title: "New output",
                                 function: () => {
                                     var n_node = CurrentContext.GetNode(node_id)
-                                    console.log(n_node)
-                                    n_node.AddOutput("Output", CreateAnyOutput())
+                                    var output = n_node.AddOutput("Output", CreateAnyOutput())
+
+                                    if (n_node.hasOwnProperty("internal_outputs"))
+                                        node.internal_outputs.AddInput("Output", CreateAnyInput())
                                 }
                             })
                         }
@@ -1219,56 +1224,103 @@
                     // preserve the target for functions
                     const target = Mouse.target
 
-                    if (!node.default) views.push({
-                        title: "Input/Output", views: [{
-                            title: `New ${target.direction.toLowerCase()}`,
-                            function: () => {
-                                var n_node = CurrentContext.GetNode(node_id)
-                                if (target.direction == "INPUT") n_node.AddInput("Input", CreateAnyInput())
-                                else n_node.AddOutput("Output", CreateAnyOutput())
-                            }
-                        }, {
-                            title: "Duplicate this",
-                            function: () => {
-                                var n_node = CurrentContext.GetNode(node_id)
-                                const dir = target.direction.toLowerCase() + "s"
+                    if (!node.default) views.push(
+                        {
+                            title: "Input/Output", views: [
+                                // disabling these for now, just because I don't want the code to be complete spaghetti
+                                //     {
+                                //     title: `New ${target.direction.toLowerCase()}`,
+                                //     function: () => {
+                                //         var n_node = CurrentContext.GetNode(node_id)
+                                //         if (target.direction == "INPUT") {
+                                //             n_node.AddInput("Input", CreateAnyInput())
+                                //         }
+                                //         else {
+                                //             n_node.AddOutput("Output", CreateAnyOutput())
+                                //         }
+                                //     }
+                                // }, {
+                                //     title: "Duplicate this",
+                                //     function: () => {
+                                //         var n_node = CurrentContext.GetNode(node_id)
+                                //         const dir = target.direction.toLowerCase() + "s"
 
-                                var name = target.direction.toLowerCase()
-                                // hacky way, but I need to to get the name somehow
-                                Object.keys(n_node[dir]).every(key => {
-                                    if (n_node[dir][key].id == target.id) return false, name = key
-                                    return true
-                                })
+                                //         var name = target.direction.toLowerCase()
+                                //         // hacky way, but I need to to get the name somehow
+                                //         Object.keys(n_node[dir]).every(key => {
+                                //             if (n_node[dir][key].id == target.id) return false, name = key
+                                //             return true
+                                //         })
 
-                                if (target.direction == "INPUT") n_node.AddInput(name, CreateAnyInput())
-                                else n_node.AddOutput(name, CreateAnyOutput())
-                            }
-                        }, {
-                            title: "Delete this",
-                            function: () => {
-                                var n_node = CurrentContext.GetNode(node_id)
-                                const dir = target.direction.toLowerCase() + "s"
+                                //         if (target.direction == "INPUT") {
+                                //             n_node.AddInput(name, CreateAnyInput())
+                                //         }
+                                //         else {
+                                //             n_node.AddOutput(name, CreateAnyOutput())
+                                //         }
+                                //     }
+                                // }, 
+                                {
+                                    title: "Delete this",
+                                    function: () => {
+                                        if (node.internal) {
+                                            var n_node = CurrentContext.GetNode(node_id)
+                                            var parentNode = n_node.parent
+                                            console.log(parentNode)
+                                            const dir = target.direction.toLowerCase() + "s"
 
-                                var name = target.direction.toLowerCase()
-                                // hacky way, but I need to to get the name somehow
-                                Object.keys(n_node[dir]).every(key => {
-                                    if (n_node[dir][key].id == target.id) return false, name = key
-                                    return true
-                                })
+                                            var name = target.direction.toLowerCase()
+                                            // hacky way, but I need to to get the name somehow
+                                            Object.keys(n_node[dir]).every(key => {
+                                                if (n_node[dir][key].id == target.id) return false, name = key
+                                                return true
+                                            })
 
-                                switch (target.direction) {
-                                    case "INPUT":
-                                        CurrentContext.RemoveInputConnections(n_node[dir][name])
-                                        break
-                                    case "OUTPUT":
-                                        CurrentContext.RemoveOutputConnections(n_node[dir][name])
-                                        break
-                                }
+                                            switch (target.direction) {
+                                                case "INPUT":
+                                                    CurrentContext.RemoveInputConnections(n_node[dir][name])
+                                                    parentNode.context.RemoveOutputConnections(parentNode.outputs[name])
+                                                    delete (parentNode.outputs[name])
+                                                    break
+                                                case "OUTPUT":
+                                                    CurrentContext.RemoveOutputConnections(n_node[dir][name])
+                                                    parentNode.context.RemoveInputConnections(parentNode.inputs[name])
+                                                    delete (parentNode.inputs[name])
+                                                    break
+                                            }
 
-                                delete (n_node[dir][name])
-                            }
-                        }]
-                    })
+                                            delete (n_node[dir][name])
+                                        } else {
+                                            var n_node = CurrentContext.GetNode(node_id)
+                                            const dir = target.direction.toLowerCase() + "s"
+
+                                            var name = target.direction.toLowerCase()
+                                            // hacky way, but I need to to get the name somehow
+                                            Object.keys(n_node[dir]).every(key => {
+                                                if (n_node[dir][key].id == target.id) return false, name = key
+                                                return true
+                                            })
+
+                                            switch (target.direction) {
+                                                case "INPUT":
+                                                    CurrentContext.RemoveInputConnections(n_node[dir][name])
+                                                    if (n_node.hasOwnProperty("internal_inputs"))
+                                                        n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs[dir][name])
+                                                    break
+                                                case "OUTPUT":
+                                                    CurrentContext.RemoveOutputConnections(n_node[dir][name])
+                                                    if (n_node.hasOwnProperty("internal_outputs"))
+                                                        n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs[dir][name])
+                                                    break
+                                            }
+
+                                            delete (n_node[dir][name])
+                                        }
+
+                                        // TODO: fix floating wire issue when deleting an i/o above a connected i/o
+                                    }
+                                }]
+                        })
 
                     views.push({
                         title: "Wires", views: [{
@@ -1292,7 +1344,6 @@
                                         CurrentContext.RemoveOutputConnections(n_node[dir][name])
                                         break
                                 }
-                                // CurrentContext.RemoveInputConnections(node.outputs[o])
                             }
                         }]
                     })
@@ -1347,7 +1398,7 @@
                         title: "Create empty node",
                         function: () => {
                             var n = CurrentContext.CreateNode()
-                            n.execute = () => { }
+                            // n.execute = () => { }
                             n.position = pos
                         }
                     }, {
@@ -1371,6 +1422,12 @@
             var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
             var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
 
+            inputs.parent = node
+            outputs.parent = node
+
+            node.internal_inputs = inputs
+            node.internal_outputs = outputs
+
             // center of screen
             var center = {
                 x: canvas.width / 2,
@@ -1392,6 +1449,8 @@
 
         context_path.push(node.InternalManager)
         CurrentContext = node.InternalManager
+
+        UpdateAndDrawNodes()
     }
 
     function ContextDeleteNode(node) {

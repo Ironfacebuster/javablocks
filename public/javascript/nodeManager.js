@@ -173,6 +173,53 @@ class Node {
         this.id = GenerateID(16)
         this.InternalManager = new NodeManager()
         this.SetAccent("ffffff")
+
+        this.execute = (finished) => {
+            finished = finished || []
+            if (finished.indexOf(this.id) != -1) return
+            finished.push(this.id)
+
+            if (!this.InternalManager.hasOwnProperty("internal_nodes_created")) return
+
+            // go through internal nodes and check for default nodes with no inputs
+            this.InternalManager.GetNodes().forEach(node => {
+                if (Object.keys(node.GetNonSelectionInputs()).length == 0 && Object.keys(node.GetOutputs()).length >= 1) {
+                    node.execute(finished)
+                }
+            })
+
+            // pass through inputs to internal_inputs
+            Object.keys(this.inputs).forEach(n => {
+                var value = this.inputs[n].value
+                this.internal_inputs.outputs[n].value = value
+
+                // pass values, and execute connections
+                this.internal_inputs.outputs[n].connections.forEach(con => {
+                    con.value = value
+                    con.parent.execute(finished)
+                })
+            })
+
+            // pass through internal_outputs to outputs
+            Object.keys(this.outputs).forEach(n => {
+                var value = this.internal_outputs.inputs[n].value
+                this.outputs[n].value = value
+
+                // execute outside output connections
+                this.outputs[n].connections.forEach(con => {
+                    con.value = value
+                    con.parent.execute(finished)
+                })
+            })
+
+            // Object.keys(this.outputs).forEach(name => {
+            //     const output = this.outputs[name]
+            //     console.log(output.connections)
+            //     // console.log(this.outputs)
+            // })
+        }
+        // make sure reference to this isn't lost
+        this.execute.bind(this)
     }
 
     AddInput(title, input) {
@@ -222,6 +269,16 @@ class Node {
 
     GetOutputs() {
         return this.outputs
+    }
+
+    GetNonSelectionInputs() {
+        var arr = {}
+
+        Object.keys(this.inputs).forEach(i => {
+            if (this.inputs[i].type != "Selection") arr[i] = this.inputs[i]
+        })
+
+        return arr
     }
 
     SetContext(context) {
