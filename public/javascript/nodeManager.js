@@ -24,6 +24,7 @@
 var nodes = []
 
 class NodeManager {
+    background_color = new Color(58, 65, 82)
     nodes = []
     constructor() {
         this.nodes = []
@@ -150,7 +151,7 @@ class Node {
     }
     inputs = {}
     outputs = {}
-    accent = "ffffff"
+    accent
     zindex = 0
     dirty = true
 
@@ -160,6 +161,7 @@ class Node {
         this.zindex = context.GetNodes().length > 0 ? context.GetNodes()[0].zindex + 1 : 0, this.context = context
         this.id = GenerateID(16)
         this.InternalManager = new NodeManager()
+        this.SetAccent("ffffff")
     }
 
     AddInput(title, input) {
@@ -228,7 +230,10 @@ class Node {
     }
 
     SetAccent(accent) {
+        if (typeof accent == "string") accent = Color.FromHex(accent)
         this.accent = accent
+
+        this.InternalManager.background_color = this.accent.divide(10)
 
         return this
     }

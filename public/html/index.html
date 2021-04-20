@@ -5,6 +5,7 @@
     <meta property="og:title" content="Node Programming" />
     <meta property="og:description" content="A node-based programming system" />
 
+    <script src="../javascript/colors.js"></script>
     <script src="../javascript/nodeManager.js"></script>
 
     <!-- default nodes -->
@@ -90,7 +91,6 @@
     *   SOFTWARE.
     */
 
-    // window.Manager = new NodeManager()
     var fast_mode = false
     var draw_collision = false
     var Mouse = {
@@ -163,10 +163,11 @@
         UpdateAndDrawNodes()
     }
 
+    var bg_color = Manager.background_color
     function ClearCanvas() {
         const oldFill = ctx.fillStyle
 
-        ctx.fillStyle = "#394152"
+        ctx.fillStyle = CurrentContext.background_color.toHex()
         ctx.fillRect(0, 0, canvas.width, canvas.height)
 
         ctx.fillStyle = oldFill
@@ -196,7 +197,7 @@
         }
 
         // draw outside w/ accent
-        var acc = HexToRGB(node.accent)
+        var acc = node.accent
         var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, 0.5)`
         ctx.fillStyle = rgba_accent
         ctx.strokeStyle = rgba_accent
@@ -247,8 +248,8 @@
 
                     ctx.lineWidth = 2
                     const color = GetColorByType(input.type)
-                    ctx.fillStyle = color.fill
-                    ctx.strokeStyle = color.stroke
+                    ctx.fillStyle = color.fill.toHex()
+                    ctx.strokeStyle = color.stroke.toHex()
                     circle(ctx, position.x, (position.y + nHeight) - 4, 5, true, true)
                     ctx.lineWidth = 1
             }
@@ -290,8 +291,8 @@
 
                     ctx.lineWidth = 2
                     const color = GetColorByType(output.type)
-                    ctx.fillStyle = color.fill
-                    ctx.strokeStyle = color.stroke
+                    ctx.fillStyle = color.fill.toHex()
+                    ctx.strokeStyle = color.stroke.toHex()
                     circle(ctx, position.x + scale.x, (position.y + nHeight) - 4, 5, true, true)
                     ctx.lineWidth = 1
             }
@@ -378,38 +379,34 @@
         switch (type) {
             case "Number":
                 return {
-                    // fill: "#0077bb",
-                    fill: "white",
-                    stroke: "#0077bb"
-                    // stroke: "#005588"
+                    fill: Color.white,
+                    stroke: Color.FromHex("#0077bb")
                 }
             case "Boolean":
                 return {
-                    // fill: "#0077bb",
-                    fill: "white",
-                    stroke: "#ff6600"
-                    // stroke: "#005588"
+                    fill: Color.white,
+                    stroke: Color.FromHex("#ff6600")
                 }
             case "Array":
                 return {
-                    fill: "white",
-                    stroke: "#eeee44"
+                    fill: Color.white,
+                    stroke: Color.FromHex("#eeee44")
                 }
             case "Object":
                 return {
-                    fill: "white",
-                    stroke: "#4444ee"
+                    fill: Color.white,
+                    stroke: Color.FromHex("#4444ee")
                 }
             default:
                 return {
-                    fill: "white",
-                    stroke: "gray"
+                    fill: Color.white,
+                    stroke: Color.FromHex("#808080")
                 }
         }
     }
 
     function DrawConnection(source, dest, shadow) {
-        ctx.strokeStyle = "white"
+        ctx.strokeStyle = Color.white.toHex()
         ctx.beginPath()
         ctx.moveTo(source.x, source.y)
 
@@ -605,8 +602,8 @@
 
                     ctx.lineWidth = 2
                     const color = GetColorByType(Mouse.target.type)
-                    ctx.fillStyle = color.fill
-                    ctx.strokeStyle = color.stroke
+                    ctx.fillStyle = color.fill.toHex()
+                    ctx.strokeStyle = color.stroke.toHex()
                     circle(ctx, endpoint.x, endpoint.y, 5, true, true)
                     ctx.lineWidth = 1
                 }
@@ -1669,6 +1666,7 @@
                 UpdateAndDrawNodes()
             } else if (CurrentContext != Manager) {
                 CurrentContext = Manager
+
                 UpdateAndDrawNodes()
             }
         }
