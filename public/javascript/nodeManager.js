@@ -45,7 +45,7 @@ class NodeManager {
         this.nodes = this.nodes.sort((a, b) => {
             return b.zindex - a.zindex
         })
-        return this.nodes
+        return [].concat(this.nodes)
     }
 
     GetNode(id) {
@@ -79,6 +79,15 @@ class NodeManager {
         else nodes.splice(index, 1)
 
         console.log(`Deleted node (id ${id})`)
+    }
+
+    BatchDelete(array) {
+        console.log("BATCH DELETING", array.length)
+        while (array.length > 0) {
+            const node = array.pop()
+            if (typeof this.GetNode(node.id) != "undefined")
+                this.DeleteNode(node.id)
+        }
     }
 
     RemoveInputConnection(input, output) {
