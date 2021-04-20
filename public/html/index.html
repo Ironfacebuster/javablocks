@@ -1332,6 +1332,32 @@
                             views: [{
                                 title: "Enter node",
                                 function: () => {
+                                    if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
+                                        var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+                                        var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
+
+                                        // center of screen
+                                        var center = {
+                                            x: canvas.width / 2,
+                                            y: canvas.height / 2
+                                        }
+
+                                        inputs.position = {
+                                            x: center.x - 150 - inputs.scale.x,
+                                            y: center.y
+                                        }
+
+                                        outputs.position = {
+                                            x: center.x + 150,
+                                            y: center.y
+                                        }
+
+                                        node.InternalManager.internal_nodes_created = true
+                                    }
+
+                                    context_path.push(node.InternalManager)
+                                    CurrentContext = node.InternalManager
+
                                     // enter this node and enter edit mode
                                     // default nodes -> convert JS to uneditable nodes?
                                     // user created nodes -> enter node edit mode
