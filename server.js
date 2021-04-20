@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
     const url = `./public${req.url}`
     console.log(url)
     if (url == "./public/") {
-        res.write("<h1>Index</h1>hello :)")
+        res.write(fs.readFileSync("./public/html/directory.html"))
         return res.end()
     }
 
