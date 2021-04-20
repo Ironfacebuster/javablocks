@@ -1213,16 +1213,16 @@
                             title: "Rename node",
                             function: () => { }
                         }, {
-                            title: "Delete node",
+                            title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                             function: () => {
-                                if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                                if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
                                 else CurrentContext.DeleteNode(node_id)
                             }
                         })
                     else if (node.internal == false) node_views.views.push({
-                        title: "Delete node",
+                        title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                         function: () => {
-                            if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                            if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
                             else CurrentContext.DeleteNode(node_id)
                         }
                     })
@@ -1365,16 +1365,16 @@
                             title: "Rename node",
                             function: () => { }
                         }, {
-                            title: "Delete node",
+                            title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                             function: () => {
-                                if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                                if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
                                 else CurrentContext.DeleteNode(node_id)
                             }
                         })
                     else node_views.views.push({
-                        title: "Delete node",
+                        title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                         function: () => {
-                            if (Mouse.selected.length != 0) CurrentContext.BatchDelete(Mouse.selected)
+                            if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
                             else CurrentContext.DeleteNode(node_id)
                         }
                     })
