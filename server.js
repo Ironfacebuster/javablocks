@@ -35,12 +35,17 @@ const server = http.createServer((req, res) => {
         return res.end()
     }
 
-    if (fs.existsSync(url)) {
-        res.write(fs.readFileSync(url) || null)
-        return res.end()
-    } else {
-        res.writeHead(404, "Not found.")
-        return res.end(`<h1>404 - Not Found.</h1> <b>${req.url}</b> was not found.`)
+    try {
+        if (fs.existsSync(url)) {
+            res.write(fs.readFileSync(url) || null)
+            return res.end()
+        } else {
+            res.writeHead(404, "Not found.")
+            return res.end(`<h1>404 - Not Found.</h1> <b>${req.url}</b> was not found.`)
+        }
+    } catch (err) {
+        res.writeHead(500, "Internal Server Error.")
+        return res.end(`<h1>400 - Internal Server Error.</h1> What did you do this time?`)
     }
 })
 
