@@ -1173,62 +1173,62 @@
                     })
                     if (has_inputs || has_outputs) views.push(wires)
 
-                    if (node.internal == false)
-                        views.push({
-                            title: "Node",
-                            views: [{
-                                title: "Enter node",
-                                function: () => {
-                                    if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
-                                        var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
-                                        var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
+                    var node_views = {
+                        title: "Node",
+                        views: []
+                    }
 
-                                        // center of screen
-                                        var center = {
-                                            x: canvas.width / 2,
-                                            y: canvas.height / 2
-                                        }
+                    if (node.internal == false && node.default == false)
+                        node_views.views.push({
+                            title: "Enter node",
+                            function: () => {
+                                if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
+                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
 
-                                        inputs.position = {
-                                            x: center.x - 150 - inputs.scale.x,
-                                            y: center.y
-                                        }
-
-                                        outputs.position = {
-                                            x: center.x + 150,
-                                            y: center.y
-                                        }
-
-                                        node.InternalManager.internal_nodes_created = true
+                                    // center of screen
+                                    var center = {
+                                        x: canvas.width / 2,
+                                        y: canvas.height / 2
                                     }
 
-                                    context_path.push(node.InternalManager)
-                                    CurrentContext = node.InternalManager
+                                    inputs.position = {
+                                        x: center.x - 150 - inputs.scale.x,
+                                        y: center.y
+                                    }
 
-                                    // enter this node and enter edit mode
-                                    // default nodes -> convert JS to uneditable nodes?
-                                    // user created nodes -> enter node edit mode
+                                    outputs.position = {
+                                        x: center.x + 150,
+                                        y: center.y
+                                    }
+
+                                    node.InternalManager.internal_nodes_created = true
                                 }
-                            },
-                            // {
-                            //     title: "Duplicate node",
-                            //     function: () => {
 
-                            //         const clone = node.Duplicate()
-                            //         clone.position.x += 10
-                            //         clone.position.y += 10
+                                context_path.push(node.InternalManager)
+                                CurrentContext = node.InternalManager
 
-                            //         node.context.nodes.push(clone)
-
-                            //     }
-                            // }, 
-                            {
-                                title: "Delete node",
-                                function: () => {
-                                    CurrentContext.DeleteNode(node_id)
-                                }
-                            }]
+                                // enter this node and enter edit mode
+                                // default nodes -> convert JS to uneditable nodes?
+                                // user created nodes -> enter node edit mode
+                            }
+                        }, {
+                            title: "Delete node",
+                            function: () => {
+                                CurrentContext.DeleteNode(node_id)
+                            }
+                        }, {
+                            title: "Rename node",
+                            function: () => { }
                         })
+                    else node_views.views.push({
+                        title: "Delete node",
+                        function: () => {
+                            CurrentContext.DeleteNode(node_id)
+                        }
+                    })
+
+                    views.push(node_views)
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1326,56 +1326,62 @@
                         }]
                     })
 
-                    if (node.internal == false)
-                        views.push({
-                            title: "Node",
-                            views: [{
-                                title: "Enter node",
-                                function: () => {
-                                    if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
-                                        var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
-                                        var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
+                    var node_views = {
+                        title: "Node",
+                        views: []
+                    }
 
-                                        // center of screen
-                                        var center = {
-                                            x: canvas.width / 2,
-                                            y: canvas.height / 2
-                                        }
+                    if (node.internal == false && node.default == false)
+                        node_views.views.push({
+                            title: "Enter node",
+                            function: () => {
+                                if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
+                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
 
-                                        inputs.position = {
-                                            x: center.x - 150 - inputs.scale.x,
-                                            y: center.y
-                                        }
-
-                                        outputs.position = {
-                                            x: center.x + 150,
-                                            y: center.y
-                                        }
-
-                                        node.InternalManager.internal_nodes_created = true
+                                    // center of screen
+                                    var center = {
+                                        x: canvas.width / 2,
+                                        y: canvas.height / 2
                                     }
 
-                                    context_path.push(node.InternalManager)
-                                    CurrentContext = node.InternalManager
+                                    inputs.position = {
+                                        x: center.x - 150 - inputs.scale.x,
+                                        y: center.y
+                                    }
 
-                                    // enter this node and enter edit mode
-                                    // default nodes -> convert JS to uneditable nodes?
-                                    // user created nodes -> enter node edit mode
-                                }
-                            },
-                            // {
-                            //     title: "Duplicate node",
-                            //     function: () => {
+                                    outputs.position = {
+                                        x: center.x + 150,
+                                        y: center.y
+                                    }
 
-                            //     }
-                            // }, 
-                            {
-                                title: "Delete node",
-                                function: () => {
-                                    CurrentContext.DeleteNode(node_id)
+                                    node.InternalManager.internal_nodes_created = true
                                 }
-                            }]
+
+                                context_path.push(node.InternalManager)
+                                CurrentContext = node.InternalManager
+
+                                // enter this node and enter edit mode
+                                // default nodes -> convert JS to uneditable nodes?
+                                // user created nodes -> enter node edit mode
+                            }
+                        }, {
+                            title: "Delete node",
+                            function: () => {
+                                CurrentContext.DeleteNode(node_id)
+                            }
+                        }, {
+                            title: "Rename node",
+                            function: () => { }
                         })
+                    else node_views.views.push({
+                        title: "Delete node",
+                        function: () => {
+                            CurrentContext.DeleteNode(node_id)
+                        }
+                    })
+
+                    views.push(node_views)
 
                     const pos = {
                         x: Mouse.position.x,
@@ -1621,62 +1627,6 @@
         return false
     }
 
-    /*
-    // a little closer, but no cigar.
-    function CalculateBezier(t) {
-        const start = 1,
-            end = arguments.length - 1
-
-        const exp_start = arguments.length - 2
-        var exp = arguments.length - 2,
-            mant = 1
-
-        var n_x = 0,
-            n_y = 0
-
-        for (var i = 1; i < arguments.length; ++i) {
-            if (i == start) {
-                console.log("START")
-                // beginning of bezier curve
-                // if there are 4 points, exp == 3
-                n_x += (Math.pow(1 - t, exp) * arguments[i].x)
-                n_y += (Math.pow(1 - t, exp) * arguments[i].y)
-            } else if (i == end) {
-                // end of bezier curve
-                console.log("END")
-                n_x += (Math.pow(t, exp_start) * arguments[i].x)
-                n_y += (Math.pow(t, exp_start) * arguments[i].y)
-            } else {
-                console.log("EXPONENT", exp)
-                console.log("EXPONENT START", exp_start)
-                console.log("MANT", mant)
-                // in the middle of the curve
-                if (exp == 1) {
-                    // n_x += (3 * (1 - t) * (t * t) * p3.x)
-                    // n_x += (exp_start * (1 - t) )
-                    console.log(exp)
-                } else if (exp > 1) {
-                    // n_x += (3 * Math.pow(1 - t, 2) * t * p2.x)
-                    n_x += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].x
-                    n_y += (exp_start * (1 - t)) * (Math.pow(t, exp)) * arguments[i].y
-                }
-                // if (exp > 1) {
-                //     n_x += (Math.pow(t, exp))
-                // }
-            }
-
-            exp--
-            mant++
-        }
-
-        return {
-            t: t,
-            x: n_x,
-            y: n_y
-        }
-    }
-    */
-
     window.addEventListener("keyup", (e) => {
         if (event.isComposing || event.keyCode === 229)
             return
@@ -1720,7 +1670,8 @@
         if (step && pause_execution) TogglePause()
         if (pause_execution) return
 
-        CurrentContext.GetNodes().forEach(node => {
+        // check Manager, rather than CurrentContext because all internal contexts take input from Manager in the end
+        Manager.GetNodes().forEach(node => {
             // sum all non selection inputs
             var inputs = 0, outputs = 0
             Object.keys(node.inputs).forEach(l => {
