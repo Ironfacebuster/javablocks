@@ -1183,47 +1183,23 @@
                         node_views.views.push({
                             title: "Enter node",
                             function: () => {
-                                if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
-                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
-                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
-
-                                    // center of screen
-                                    var center = {
-                                        x: canvas.width / 2,
-                                        y: canvas.height / 2
-                                    }
-
-                                    inputs.position = {
-                                        x: center.x - 150 - inputs.scale.x,
-                                        y: center.y
-                                    }
-
-                                    outputs.position = {
-                                        x: center.x + 150,
-                                        y: center.y
-                                    }
-
-                                    node.InternalManager.internal_nodes_created = true
-                                }
-
-                                context_path.push(node.InternalManager)
-                                CurrentContext = node.InternalManager
+                                EnterNodeContext(node)
                             }
                         }, {
                             title: "Rename node",
-                            function: () => { }
+                            function: () => {
+                                // open modal?
+                            }
                         }, {
                             title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                             function: () => {
-                                if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
-                                else CurrentContext.DeleteNode(node_id)
+                                ContextDeleteNode(node)
                             }
                         })
                     else if (node.internal == false) node_views.views.push({
                         title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                         function: () => {
-                            if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
-                            else CurrentContext.DeleteNode(node_id)
+                            ContextDeleteNode(node)
                         }
                     })
 
@@ -1296,11 +1272,6 @@
 
                     views.push({
                         title: "Wires", views: [{
-                            title: "New Wire",
-                            function: () => {
-
-                            }
-                        }, {
                             title: "Detach All Wires",
                             function: () => {
                                 var n_node = CurrentContext.GetNode(node_id)
@@ -1335,47 +1306,23 @@
                         node_views.views.push({
                             title: "Enter node",
                             function: () => {
-                                if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
-                                    var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
-                                    var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
-
-                                    // center of screen
-                                    var center = {
-                                        x: canvas.width / 2,
-                                        y: canvas.height / 2
-                                    }
-
-                                    inputs.position = {
-                                        x: center.x - 150 - inputs.scale.x,
-                                        y: center.y
-                                    }
-
-                                    outputs.position = {
-                                        x: center.x + 150,
-                                        y: center.y
-                                    }
-
-                                    node.InternalManager.internal_nodes_created = true
-                                }
-
-                                context_path.push(node.InternalManager)
-                                CurrentContext = node.InternalManager
+                                EnterNodeContext(node)
                             }
                         }, {
                             title: "Rename node",
-                            function: () => { }
+                            function: () => {
+                                // open modal?
+                            }
                         }, {
                             title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                             function: () => {
-                                if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
-                                else CurrentContext.DeleteNode(node_id)
+                                ContextDeleteNode(node)
                             }
                         })
                     else node_views.views.push({
                         title: "Delete node" + (Mouse.selected.length > 1 ? "s" : ""),
                         function: () => {
-                            if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
-                            else CurrentContext.DeleteNode(node_id)
+                            ContextDeleteNode(node)
                         }
                     })
 
@@ -1419,6 +1366,38 @@
         e.stopPropagation()
     })
 
+    function EnterNodeContext(node) {
+        if (!node.InternalManager.hasOwnProperty("internal_nodes_created")) {
+            var inputs = CreateInternalInputsNode(node.inputs, node.InternalManager)
+            var outputs = CreateInternalOutputsNode(node.outputs, node.InternalManager)
+
+            // center of screen
+            var center = {
+                x: canvas.width / 2,
+                y: canvas.height / 2
+            }
+
+            inputs.position = {
+                x: center.x - 150 - inputs.scale.x,
+                y: center.y
+            }
+
+            outputs.position = {
+                x: center.x + 150,
+                y: center.y
+            }
+
+            node.InternalManager.internal_nodes_created = true
+        }
+
+        context_path.push(node.InternalManager)
+        CurrentContext = node.InternalManager
+    }
+
+    function ContextDeleteNode(node) {
+        if (Mouse.selected.length > 1) CurrentContext.BatchDelete(Mouse.selected)
+        else CurrentContext.DeleteNode(node.id)
+    }
 
     function SetMenuOverlay(position, funct, data) {
         // menu collision set by rendering function
@@ -1509,16 +1488,12 @@
     }
 
     function DrawContextMenu(views, position) {
-        // var views = ["New Wire", "Remove All Wires"]
         var num = views.length
         views.forEach(v => {
             num += v.views.length
         })
         var calc_height = (num * 18) + 10
-        // console.log("NUMBER", num)
         var height = Math.max(15, calc_height)
-        // if (height > 155) height = 155
-        // console.log("HEIGHT", height)
 
         if (!fast_mode) {
             ctx.fillStyle = "rgba(0,0,0,0.15)"
@@ -1644,6 +1619,19 @@
     })
 
     window.addEventListener("keyup", (e) => {
+        // backspace or delete
+        if (e.keyCode == 8 || e.keyCode == 46) {
+            if (Mouse.selected.length > 0) CurrentContext.BatchDelete(Mouse.selected), UpdateAndDrawNodes()
+
+            // commenting this out for now
+            // not sure how often you might unintentionally delete a node 
+            // else {
+            //     // check if hovering over a node
+            //     var t = GetOverlappedNode(Mouse.position)
+
+            //     if (t && t.type == "Node") CurrentContext.DeleteNode(t.id), UpdateAndDrawNodes()
+            // }
+        }
         // escape
         if (e.keyCode == 27) {
             // if context_path has more than one entry
