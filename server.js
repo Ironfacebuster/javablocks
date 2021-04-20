@@ -45,7 +45,7 @@ const server = http.createServer((req, res) => {
         }
     } catch (err) {
         res.writeHead(500, "Internal Server Error.")
-        return res.end(`<h1>400 - Internal Server Error.</h1> What did you do this time?`)
+        return res.end(`<h1>500 - Internal Server Error.</h1> What did you do this time?`)
     }
 })
 
