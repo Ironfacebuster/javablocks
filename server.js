@@ -103,20 +103,11 @@ function DirectoryToHTML(directory, looped, dir) {
     var body = new_name + "<div>"
     console.log("DIRECTORY", new_name)
 
-    directory.files = directory.files.sort((a, b) => {
-        if (a.hasOwnProperty("name") && !b.hasOwnProperty("name")) return 1
-        if (b.hasOwnProperty("name") && !a.hasOwnProperty("name")) return -1
-        if (!b.hasOwnProperty("name") && !a.hasOwnProperty("name")) return 1
-        return a.name.localeCompare(b.name)
-    })
+    directory.files = directory.files.sort(Sorter)
 
     directory.files.forEach(file => {
         if (file.hasOwnProperty("files")) {
-            file.files = file.files.sort((a, b) => {
-                if (a.hasOwnProperty("name") && !b.hasOwnProperty("name")) return 1
-                if (b.hasOwnProperty("name") && !a.hasOwnProperty("name")) return -1
-                return a.name.localeCompare(b.name)
-            })
+            file.files = file.files.sort(Sorter)
             body = body + DirectoryToHTML(file, true, directory.root)
         } else {
             if (file.name == "index.html") {
@@ -129,6 +120,12 @@ function DirectoryToHTML(directory, looped, dir) {
         }
     })
 
-
     return body + "</div>"
+}
+
+function Sorter(a, b) {
+    if (a.hasOwnProperty("name") && !b.hasOwnProperty("name")) return 1
+    if (b.hasOwnProperty("name") && !a.hasOwnProperty("name")) return -1
+    if (!b.hasOwnProperty("name") && !a.hasOwnProperty("name")) return 1
+    return a.name.localeCompare(b.name)
 }
