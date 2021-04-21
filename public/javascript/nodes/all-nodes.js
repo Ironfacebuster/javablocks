@@ -54,7 +54,7 @@ function CreateMathFunctionsNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -94,7 +94,7 @@ function CreateStaticNumberNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -125,7 +125,7 @@ function CreateRandomNumberNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -196,7 +196,7 @@ function CreateMathOperationsNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -258,7 +258,7 @@ function CreateInternalInputsNode(inputs, context) {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -331,7 +331,7 @@ function CreateComparisonNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -365,7 +365,7 @@ function CreatePredicateNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -397,7 +397,7 @@ function CreateBoolInverterNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -430,7 +430,7 @@ function CreateObjectKeyNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                 })
         }
     }
@@ -464,7 +464,7 @@ function CreateObjectNode() {
                     // console.log(con)
                     con.value = output.value
                     if (finished.indexOf(con.parent.id) == -1)
-                        con.parent.execute(finished)
+                        Schedule.Schedule(con.parent, finished)
                     // eventually wait for execution of connections
                 })
         }

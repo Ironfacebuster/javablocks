@@ -130,7 +130,7 @@ class NodeManager {
         input.value = input.default_value
         // call "execute" if it has it
         if (input.hasOwnProperty("execute"))
-            input.execute()
+            Schedule.Schedule(input)
     }
 
     RemoveOutputConnections(output) {
@@ -185,7 +185,7 @@ class Node {
             // go through internal nodes and check for default nodes with no inputs
             this.InternalManager.GetNodes().forEach(node => {
                 if (Object.keys(node.GetNonSelectionInputs()).length == 0 && Object.keys(node.GetOutputs()).length >= 1) {
-                    node.execute(finished)
+                    Schedule.Schedule(node, finished)
                 }
             })
 
@@ -197,7 +197,7 @@ class Node {
                 // pass values, and execute connections
                 this.internal_inputs.outputs[n].connections.forEach(con => {
                     con.value = value
-                    con.parent.execute(finished)
+                    Schedule.Schedule(con.parent, finished)
                 })
             })
 
@@ -209,7 +209,7 @@ class Node {
                 // execute outside output connections
                 this.outputs[n].connections.forEach(con => {
                     con.value = value
-                    con.parent.execute(finished)
+                    Schedule.Schedule(con.parent, finished)
                 })
             })
 
@@ -351,6 +351,7 @@ class Node {
 
 window.Manager = new NodeManager()
 
+// TODO: change IO to Input and Output classes!
 function CreateIO(direction) {
     return {
         id: GenerateID(16),
