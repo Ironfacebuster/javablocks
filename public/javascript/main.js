@@ -119,6 +119,7 @@ function DrawNode(node) {
     }
 
     // each node input/output should be approx 15px tall
+    // 25px now lol
     scale.y += (Math.max(Object.keys(node.inputs).length, Object.keys(node.outputs).length) * 25)
 
     // draw shadow
@@ -131,8 +132,11 @@ function DrawNode(node) {
     // draw outside w/ accent
     var acc = node.accent
     acc.a = 128
+
     if (fast_mode) acc = acc.divide(2), acc.a = 255
+
     var rgba_accent = `rgba(${acc.r},${acc.g},${acc.b}, ${acc.a / 255})`
+
     ctx.fillStyle = rgba_accent
     ctx.strokeStyle = rgba_accent
     roundRect(ctx, position.x, position.y, scale.x, scale.y, 5, true, false)
@@ -450,9 +454,8 @@ canvas.addEventListener('mousemove', (e) => {
         // dragging something
 
         if (Mouse.target.type == "Node") {
-            // console.log(Mouse.selected, Mouse.selected.length > 0, Mouse.selected.findIndex((node) => { return node.id == Mouse.target.id }) != -1)
+            // if we selected objects with the selection box, and are dragging a selected node
             if (Array.isArray(Mouse.selected) && Mouse.selected.length > 0 && Mouse.selected.findIndex((node) => { return node.id == Mouse.target.id }) != -1) {
-                // if we selected objects with the selection box, and are dragging a selected node
                 Mouse.target.BringToFront()
                 SetCursor("grabbing")
 
@@ -859,11 +862,12 @@ canvas.addEventListener('mouseup', (e) => {
             CurrentContext.GetNodes().forEach(node => {
                 if (Object.keys(node.outputs).length > 0)
                     Object.keys(node.outputs).forEach(o => {
-                        // bezier curve will be calculated with low resolution for speed
                         var output = node.outputs[o]
 
                         if (output.connections && output.connections.length > 0)
                             output.connections.forEach((c) => {
+                                // calculate bezier curve if NOT in fast mode,
+                                // otherwise just check a straight line
                                 if (!fast_mode) {
                                     var mid = {
                                         x: (output.position.x + c.position.x) / 2,
@@ -880,6 +884,7 @@ canvas.addEventListener('mouseup', (e) => {
                                         y: c.position.y
                                     }
 
+                                    // bezier curve will be calculated with low resolution for speed
                                     for (var i = 0; i <= 64; i += 2) {
                                         const t = i / 64,
                                             t2 = (i + 2) / 64
@@ -946,11 +951,10 @@ canvas.addEventListener('mouseup', (e) => {
                 var minY = node.position.y,
                     maxY = node.position.y + node.scale.y
 
-                // check if the far corners are within the selection bounds
-                var xInBounds = (minX >= bounds.x.min && minX <= bounds.x.max) || (maxX >= bounds.x.min && maxX <= bounds.x.max)
-                var yInBounds = (minY >= bounds.y.min && minY <= bounds.y.max) || (maxY >= bounds.y.min && maxY <= bounds.y.max)
-                // maybe add a "side" check too?
-                // if maxY and minY are out of bounds, but maxX or minX are in bounds, this means a side is in the selection box
+                //                                                             || now AND instead of OR
+                // check if the far corners are within the selection bounds    \/
+                var xInBounds = (minX >= bounds.x.min && minX <= bounds.x.max) && (maxX >= bounds.x.min && maxX <= bounds.x.max)
+                var yInBounds = (minY >= bounds.y.min && minY <= bounds.y.max) && (maxY >= bounds.y.min && maxY <= bounds.y.max)
 
                 inSelection = xInBounds && yInBounds
 
@@ -1042,7 +1046,7 @@ canvas.addEventListener('mouseup', (e) => {
                                 title: "New input",
                                 function: () => {
                                     var n_node = CurrentContext.GetNode(node_id)
-                                    var input = n_node.AddOutput("Input", CreateAnyOutput())
+                                    n_node.AddOutput("Input", CreateAnyOutput())
                                     n_node.parent.AddInput("Input", CreateAnyInput())
                                 }
                             })
@@ -1051,7 +1055,7 @@ canvas.addEventListener('mouseup', (e) => {
                                 title: "New output",
                                 function: () => {
                                     var n_node = CurrentContext.GetNode(node_id)
-                                    var output = n_node.AddInput("Output", CreateAnyInput())
+                                    n_node.AddInput("Output", CreateAnyInput())
                                     n_node.parent.AddOutput("Output", CreateAnyOutput())
                                 }
                             })
@@ -1060,7 +1064,7 @@ canvas.addEventListener('mouseup', (e) => {
                             title: "New input",
                             function: () => {
                                 var n_node = CurrentContext.GetNode(node_id)
-                                var input = n_node.AddInput("Input", CreateAnyInput())
+                                n_node.AddInput("Input", CreateAnyInput())
 
                                 if (n_node.hasOwnProperty("internal_inputs"))
                                     node.internal_inputs.AddOutput("Input", CreateAnyOutput())
@@ -1069,7 +1073,7 @@ canvas.addEventListener('mouseup', (e) => {
                             title: "New output",
                             function: () => {
                                 var n_node = CurrentContext.GetNode(node_id)
-                                var output = n_node.AddOutput("Output", CreateAnyOutput())
+                                n_node.AddOutput("Output", CreateAnyOutput())
 
                                 if (n_node.hasOwnProperty("internal_outputs"))
                                     node.internal_outputs.AddInput("Output", CreateAnyInput())
@@ -1110,7 +1114,6 @@ canvas.addEventListener('mouseup', (e) => {
                         Object.keys(node.outputs).forEach(o => {
                             CurrentContext.RemoveInputConnections(node.outputs[o])
                         })
-                        // console.log(node)
                     }
                 })
                 if (has_inputs || has_outputs) views.push(wires)
@@ -1470,6 +1473,10 @@ function DrawSelectionDropdown(data, position) {
         ctx.strokeStyle = "white"
         var new_height = position.y + 6
 
+        // scroll bar shows up fine for the only Selection that has a scroll bar
+        // but testing with any amount of items shows that it isn't generalized.
+        // fix this!
+
         var c = MenuOverlay.scrollHeight,
             b = calc_height,
             y = height - (height / 3.75)
@@ -1499,7 +1506,8 @@ function DrawContextMenu(views, position) {
     ctx.fillStyle = "rgba(0,0,0,0.5)"
     ctx.strokeStyle = "white"
     roundRect(ctx, position.x, position.y, 170, height, 5, true, true)
-    var drawScroll = false
+    // var drawScroll = false
+    // not sure why this is here
 
     ctx.font = "bold 12px Arial"
     ctx.fillStyle = "white"
