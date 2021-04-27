@@ -8,6 +8,7 @@
     <script src="/javascript/colors.js"></script>
     <script src="/javascript/scheduler.js"></script>
     <script src="/javascript/nodeManager.js"></script>
+    <script src="/javascript/LZString.js"></script>
 
     <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -71,10 +72,18 @@
         <button onclick="CreatePredicateNode()">Add Predicate Switch Node</button>
     </div>
 
+    <div>
+        <div>Files</div>
+        <label for="node">Load Node from file</label>
+        <input id="node-selector" name="node" type="file" accept=".node" />
+    </div>
+
     <canvas id="main">
 
     </canvas>
 </body>
+
+<script src="/javascript/fileManager.js" defer></script>
 
 <!-- moved to separate javascript file for better autocompletion -->
 <script src="/javascript/main.js" defer></script>
