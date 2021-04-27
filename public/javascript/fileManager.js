@@ -47,9 +47,9 @@ function SaveNode(node) {
     var n = node.toJSON()
 
     // remove connections
-    delete (n.output_connections)
+    delete(n.output_connections)
     // delete position, but preserve scale
-    delete (n.position)
+    delete(n.position)
 
     var dat = {
         schema: "1.0",
@@ -73,9 +73,14 @@ function LoadNodeFromFile(compressed) {
     const json = parsed.data
 
     var node = LoadNode(json)
-    node.position = { x: node.scale.x, y: node.scale.y }
+    node.position = {
+        x: node.scale.x,
+        y: node.scale.y
+    }
 
     UpdateAndDrawNodes()
+
+    return node
 }
 
 function LoadNode(data, loadID, context, parent) {

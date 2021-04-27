@@ -91,10 +91,15 @@ function InitCanvas() {
     c.height = Math.round(window.innerHeight * 0.65)
     c.width = Math.round(window.innerWidth - 10)
 
+    var con = document.getElementById("main_container")
+    con.height = c.height
+    con.width = c.width
+
     UpdateAndDrawNodes()
 }
 
 var bg_color = Manager.background_color
+
 function ClearCanvas() {
     const oldFill = ctx.fillStyle
 
@@ -147,7 +152,9 @@ function DrawNode(node) {
         roundRect(ctx, position.x + accentWidth, position.y, scale.x - accentWidth, scale.y, 5, true, false)
     }
 
-    if (Array.isArray(Mouse.selected) && Mouse.selected.findIndex((n) => { return n.id == node.id }) >= 0) {
+    if (Array.isArray(Mouse.selected) && Mouse.selected.findIndex((n) => {
+            return n.id == node.id
+        }) >= 0) {
         // outline this node
         ctx.fillStyle = "rgba(0,255,128,0.1)"
         ctx.strokeStyle = "rgba(0,255,64,0.75)"
@@ -273,9 +280,19 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
     if (typeof radius === 'undefined')
         radius = 5
     if (typeof radius === 'number')
-        radius = { tl: radius, tr: radius, br: radius, bl: radius }
+        radius = {
+            tl: radius,
+            tr: radius,
+            br: radius,
+            bl: radius
+        }
     else {
-        var defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 }
+        var defaultRadius = {
+            tl: 0,
+            tr: 0,
+            br: 0,
+            bl: 0
+        }
         for (var side in defaultRadius)
             radius[side] = radius[side] || defaultRadius[side]
 
@@ -319,28 +336,28 @@ function GetColorByType(type) {
         case "Number":
             return {
                 fill: Color.white,
-                stroke: Color.FromHex("#0077bb")
+                    stroke: Color.FromHex("#0077bb")
             }
-        case "Boolean":
-            return {
-                fill: Color.white,
-                stroke: Color.FromHex("#ff6600")
-            }
-        case "Array":
-            return {
-                fill: Color.white,
-                stroke: Color.FromHex("#eeee44")
-            }
-        case "Object":
-            return {
-                fill: Color.white,
-                stroke: Color.FromHex("#4444ee")
-            }
-        default:
-            return {
-                fill: Color.white,
-                stroke: Color.FromHex("#808080")
-            }
+            case "Boolean":
+                return {
+                    fill: Color.white,
+                        stroke: Color.FromHex("#ff6600")
+                }
+                case "Array":
+                    return {
+                        fill: Color.white,
+                            stroke: Color.FromHex("#eeee44")
+                    }
+                    case "Object":
+                        return {
+                            fill: Color.white,
+                                stroke: Color.FromHex("#4444ee")
+                        }
+                        default:
+                            return {
+                                fill: Color.white,
+                                    stroke: Color.FromHex("#808080")
+                            }
     }
 }
 
@@ -454,7 +471,9 @@ canvas.addEventListener('mousemove', (e) => {
 
         if (Mouse.target.type == "Node") {
             // if we selected objects with the selection box, and are dragging a selected node
-            if (Array.isArray(Mouse.selected) && Mouse.selected.length > 0 && Mouse.selected.findIndex((node) => { return node.id == Mouse.target.id }) != -1) {
+            if (Array.isArray(Mouse.selected) && Mouse.selected.length > 0 && Mouse.selected.findIndex((node) => {
+                    return node.id == Mouse.target.id
+                }) != -1) {
                 Mouse.target.BringToFront()
                 SetCursor("grabbing")
 
@@ -582,11 +601,66 @@ canvas.addEventListener('mousemove', (e) => {
 
 }, false)
 
+const overlay_text = document.getElementById("overlay_text")
+
+document.addEventListener("dragover", (e) => {
+    e.preventDefault()
+
+    overlay_text.style.display = "block"
+})
+
+document.addEventListener("dragleave", (e) => {
+    e.preventDefault()
+    overlay_text.style.display = "none"
+})
+
+document.addEventListener("drop", (e) => {
+    var rect = canvas.getBoundingClientRect()
+
+    Mouse.position = {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    }
+
+    overlay_text.style.display = "none"
+
+    e.preventDefault()
+
+    if (e.dataTransfer.items) {
+        for (var i = 0; i < e.dataTransfer.items.length; i++) {
+            if (e.dataTransfer.items[i].kind === 'file') {
+                var file = e.dataTransfer.items[i].getAsFile()
+                LoadFile(file)
+            }
+        }
+    } else {
+        for (var i = 0; i < e.dataTransfer.files.length; i++) {
+            LoadFile(e.dataTransfer.files[i])
+        }
+    }
+})
+
+function LoadFile(file) {
+    const reader = new FileReader()
+
+    reader.onload = function () {
+        // console.log(reader.result)
+        var node = LoadNodeFromFile(reader.result)
+        node.position = Mouse.position
+
+        UpdateAndDrawNodes()
+
+        nodeSelector.value = null
+    }
+
+    reader.readAsText(file)
+}
+
 function ClearMouseSelection(clean) {
     clean = clean || false
     if (Mouse.selected)
         Mouse.selected.forEach(n => {
-            delete (n.dragOffset)
+            delete(n.dragOffset)
         })
 
     if (clean)
@@ -617,8 +691,7 @@ function GetOverlappedNode(point) {
 
             return true
         })
-    }
-    else CurrentContext.GetNodes().every(node => {
+    } else CurrentContext.GetNodes().every(node => {
         var t = CheckPointInNode(node, point)
 
         if (typeof t != "undefined") {
@@ -652,7 +725,12 @@ function CheckPointInNode(node, point) {
         }
     }
 
-    if (draw_collision) DrawCollision({ x: pos.x, y: pos.y, width: scale.x, height: scale.y })
+    if (draw_collision) DrawCollision({
+        x: pos.x,
+        y: pos.y,
+        width: scale.x,
+        height: scale.y
+    })
 
     var target = undefined
     if (point.x >= bounds.x.min && point.x <= bounds.x.max && point.y >= bounds.y.min && point.y <= bounds.y.max) {
@@ -803,6 +881,7 @@ var MenuOverlay = {
     scrollHeight: 0,
     active: false
 }
+
 function UpdateAndDrawNodes() {
     context = CurrentContext || Manager
     ClearCanvas()
@@ -1081,7 +1160,8 @@ canvas.addEventListener('mouseup', (e) => {
                     }
 
                     views.push({
-                        title: "Input/Output", views: input_views
+                        title: "Input/Output",
+                        views: input_views
                     })
                 }
 
@@ -1167,114 +1247,116 @@ canvas.addEventListener('mouseup', (e) => {
                 // preserve the target for functions
                 const target = Mouse.target
 
-                if (!node.default) views.push(
-                    {
-                        title: "Input/Output", views: [
-                            // disabling these for now, just because I don't want the code to be complete spaghetti
-                            //     {
-                            //     title: `New ${target.direction.toLowerCase()}`,
-                            //     function: () => {
-                            //         var n_node = CurrentContext.GetNode(node_id)
-                            //         if (target.direction == "INPUT") {
-                            //             n_node.AddInput("Input", CreateAnyInput())
-                            //         }
-                            //         else {
-                            //             n_node.AddOutput("Output", CreateAnyOutput())
-                            //         }
-                            //     }
-                            // }, {
-                            //     title: "Duplicate this",
-                            //     function: () => {
-                            //         var n_node = CurrentContext.GetNode(node_id)
-                            //         const dir = target.direction.toLowerCase() + "s"
+                if (!node.default) views.push({
+                    title: "Input/Output",
+                    views: [
+                        // disabling these for now, just because I don't want the code to be complete spaghetti
+                        //     {
+                        //     title: `New ${target.direction.toLowerCase()}`,
+                        //     function: () => {
+                        //         var n_node = CurrentContext.GetNode(node_id)
+                        //         if (target.direction == "INPUT") {
+                        //             n_node.AddInput("Input", CreateAnyInput())
+                        //         }
+                        //         else {
+                        //             n_node.AddOutput("Output", CreateAnyOutput())
+                        //         }
+                        //     }
+                        // }, {
+                        //     title: "Duplicate this",
+                        //     function: () => {
+                        //         var n_node = CurrentContext.GetNode(node_id)
+                        //         const dir = target.direction.toLowerCase() + "s"
 
-                            //         var name = target.direction.toLowerCase()
-                            //         // hacky way, but I need to to get the name somehow
-                            //         Object.keys(n_node[dir]).every(key => {
-                            //             if (n_node[dir][key].id == target.id) return false, name = key
-                            //             return true
-                            //         })
+                        //         var name = target.direction.toLowerCase()
+                        //         // hacky way, but I need to to get the name somehow
+                        //         Object.keys(n_node[dir]).every(key => {
+                        //             if (n_node[dir][key].id == target.id) return false, name = key
+                        //             return true
+                        //         })
 
-                            //         if (target.direction == "INPUT") {
-                            //             n_node.AddInput(name, CreateAnyInput())
-                            //         }
-                            //         else {
-                            //             n_node.AddOutput(name, CreateAnyOutput())
-                            //         }
-                            //     }
-                            // }, 
-                            {
-                                title: "Delete this",
-                                function: () => {
-                                    if (node.internal) {
-                                        var n_node = CurrentContext.GetNode(node_id)
-                                        var parentNode = n_node.parent
-                                        console.log(parentNode)
-                                        const dir = target.direction.toLowerCase() + "s"
+                        //         if (target.direction == "INPUT") {
+                        //             n_node.AddInput(name, CreateAnyInput())
+                        //         }
+                        //         else {
+                        //             n_node.AddOutput(name, CreateAnyOutput())
+                        //         }
+                        //     }
+                        // }, 
+                        {
+                            title: "Delete this",
+                            function: () => {
+                                if (node.internal) {
+                                    var n_node = CurrentContext.GetNode(node_id)
+                                    var parentNode = n_node.parent
+                                    console.log(parentNode)
+                                    const dir = target.direction.toLowerCase() + "s"
 
-                                        var name = target.direction.toLowerCase()
-                                        // hacky way, but I need to to get the name somehow
-                                        Object.keys(n_node[dir]).every(key => {
-                                            if (n_node[dir][key].id == target.id) return false, name = key
-                                            return true
-                                        })
+                                    var name = target.direction.toLowerCase()
+                                    // hacky way, but I need to to get the name somehow
+                                    Object.keys(n_node[dir]).every(key => {
+                                        if (n_node[dir][key].id == target.id) return false, name = key
+                                        return true
+                                    })
 
-                                        switch (target.direction) {
-                                            case "INPUT":
-                                                CurrentContext.RemoveInputConnections(n_node[dir][name])
-                                                parentNode.context.RemoveOutputConnections(parentNode.outputs[name])
-                                                delete (parentNode.outputs[name])
-                                                break
-                                            case "OUTPUT":
-                                                CurrentContext.RemoveOutputConnections(n_node[dir][name])
-                                                parentNode.context.RemoveInputConnections(parentNode.inputs[name])
-                                                delete (parentNode.inputs[name])
-                                                break
-                                        }
-
-                                        delete (n_node[dir][name])
-                                    } else {
-                                        var n_node = CurrentContext.GetNode(node_id)
-                                        const dir = target.direction.toLowerCase() + "s"
-
-                                        var name = target.direction.toLowerCase()
-                                        // hacky way, but I need to to get the name somehow
-                                        Object.keys(n_node[dir]).every(key => {
-                                            if (n_node[dir][key].id == target.id) return false, name = key
-                                            return true
-                                        })
-
-                                        switch (target.direction) {
-                                            case "INPUT":
-                                                CurrentContext.RemoveInputConnections(n_node[dir][name])
-                                                if (n_node.hasOwnProperty("internal_inputs")) {
-                                                    n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs["outputs"][name])
-                                                    // delete output
-                                                    const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
-                                                    delete (internal.outputs[name])
-                                                }
-                                                break
-                                            case "OUTPUT":
-                                                CurrentContext.RemoveOutputConnections(n_node[dir][name])
-                                                if (n_node.hasOwnProperty("internal_outputs")) {
-                                                    n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs["inputs"][name])
-
-                                                    const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
-                                                    delete (internal.inputs[name])
-                                                }
-                                                break
-                                        }
-
-                                        delete (n_node[dir][name])
+                                    switch (target.direction) {
+                                        case "INPUT":
+                                            CurrentContext.RemoveInputConnections(n_node[dir][name])
+                                            parentNode.context.RemoveOutputConnections(parentNode.outputs[name])
+                                            delete(parentNode.outputs[name])
+                                            break
+                                        case "OUTPUT":
+                                            CurrentContext.RemoveOutputConnections(n_node[dir][name])
+                                            parentNode.context.RemoveInputConnections(parentNode.inputs[name])
+                                            delete(parentNode.inputs[name])
+                                            break
                                     }
 
-                                    // TODO: fix floating wire issue when deleting an i/o above a connected i/o
+                                    delete(n_node[dir][name])
+                                } else {
+                                    var n_node = CurrentContext.GetNode(node_id)
+                                    const dir = target.direction.toLowerCase() + "s"
+
+                                    var name = target.direction.toLowerCase()
+                                    // hacky way, but I need to to get the name somehow
+                                    Object.keys(n_node[dir]).every(key => {
+                                        if (n_node[dir][key].id == target.id) return false, name = key
+                                        return true
+                                    })
+
+                                    switch (target.direction) {
+                                        case "INPUT":
+                                            CurrentContext.RemoveInputConnections(n_node[dir][name])
+                                            if (n_node.hasOwnProperty("internal_inputs")) {
+                                                n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs["outputs"][name])
+                                                // delete output
+                                                const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
+                                                delete(internal.outputs[name])
+                                            }
+                                            break
+                                        case "OUTPUT":
+                                            CurrentContext.RemoveOutputConnections(n_node[dir][name])
+                                            if (n_node.hasOwnProperty("internal_outputs")) {
+                                                n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs["inputs"][name])
+
+                                                const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
+                                                delete(internal.inputs[name])
+                                            }
+                                            break
+                                    }
+
+                                    delete(n_node[dir][name])
                                 }
-                            }]
-                    })
+
+                                // TODO: fix floating wire issue when deleting an i/o above a connected i/o
+                            }
+                        }
+                    ]
+                })
 
                 views.push({
-                    title: "Wires", views: [{
+                    title: "Wires",
+                    views: [{
                         title: "Detach All Wires",
                         function: () => {
                             var n_node = CurrentContext.GetNode(node_id)
@@ -1345,7 +1427,8 @@ canvas.addEventListener('mouseup', (e) => {
                 y: Mouse.position.y
             }
             var views = [{
-                title: "Nodes", views: [{
+                title: "Nodes",
+                views: [{
                     title: "Create empty node",
                     function: () => {
                         var n = CurrentContext.CreateNode()
@@ -1413,7 +1496,9 @@ function SetMenuOverlay(position, funct, data) {
     // menu collision set by rendering function
     MenuOverlay.collision = []
     // set the rendering function to use when drawing this menu
-    MenuOverlay.funct = () => { funct(data, position) }
+    MenuOverlay.funct = () => {
+        funct(data, position)
+    }
     MenuOverlay.active = true
     UpdateAndDrawNodes()
 }
@@ -1459,16 +1544,16 @@ function DrawSelectionDropdown(data, position) {
 
         if (h >= 16 && h <= height + 2)
             ctx.fillText(view.name, position.x + 14, position.y + h),
-                MenuOverlay.collision.push({
-                    x: position.x + 10,
-                    y: position.y + h - 12,
-                    width: parent.scale.x * 0.75,
-                    height: 15,
-                    function: () => {
-                        console.log(i)
-                        selection.SetSelection(i)
-                    }
-                })
+            MenuOverlay.collision.push({
+                x: position.x + 10,
+                y: position.y + h - 12,
+                width: parent.scale.x * 0.75,
+                height: 15,
+                function: () => {
+                    console.log(i)
+                    selection.SetSelection(i)
+                }
+            })
         return true
     })
 
@@ -1696,7 +1781,8 @@ setInterval(() => {
     // check Manager, rather than CurrentContext because all internal contexts take input from Manager in the end
     Manager.GetNodes().forEach(node => {
         // sum all non selection inputs
-        var inputs = 0, outputs = 0
+        var inputs = 0,
+            outputs = 0
         Object.keys(node.inputs).forEach(l => {
             if (node.inputs[l].type != "Selection") inputs++
         })
