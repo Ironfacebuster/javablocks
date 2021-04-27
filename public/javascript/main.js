@@ -21,7 +21,6 @@
  *   SOFTWARE.
  */
 
-
 var fast_mode = false
 var draw_collision = false
 var Mouse = {
@@ -1130,6 +1129,11 @@ canvas.addEventListener('mouseup', (e) => {
                             EnterNodeContext(node)
                         }
                     }, {
+                        title: "Export node",
+                        function: () => {
+                            SaveNode(node)
+                        }
+                    }, {
                         title: "Rename node",
                         function: () => {
                             // open modal?
@@ -1243,13 +1247,21 @@ canvas.addEventListener('mouseup', (e) => {
                                         switch (target.direction) {
                                             case "INPUT":
                                                 CurrentContext.RemoveInputConnections(n_node[dir][name])
-                                                if (n_node.hasOwnProperty("internal_inputs"))
-                                                    n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs[dir][name])
+                                                if (n_node.hasOwnProperty("internal_inputs")) {
+                                                    n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs["outputs"][name])
+                                                    // delete output
+                                                    const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
+                                                    delete (internal.outputs[name])
+                                                }
                                                 break
                                             case "OUTPUT":
                                                 CurrentContext.RemoveOutputConnections(n_node[dir][name])
-                                                if (n_node.hasOwnProperty("internal_outputs"))
-                                                    n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs[dir][name])
+                                                if (n_node.hasOwnProperty("internal_outputs")) {
+                                                    n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs["inputs"][name])
+
+                                                    const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
+                                                    delete (internal.inputs[name])
+                                                }
                                                 break
                                         }
 
@@ -1674,8 +1686,6 @@ window.addEventListener("resize", () => {
 // check for nodes that can be activated
 setInterval(() => {
     var redraw_nodes = false
-
-    console.log()
 
     if (step && !pause_execution) TogglePause(), step = false
     if (step && pause_execution) TogglePause()

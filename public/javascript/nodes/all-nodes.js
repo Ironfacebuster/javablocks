@@ -25,6 +25,7 @@ function CreateMathFunctionsNode() {
     var node = CurrentContext.CreateNode("Math Functions", "A node containing various math functions.")
 
     node.default = true
+    node.default_type = "math_functions"
     node.SetAccent("ffbb00")
 
     node.AddInput("Mode", CreateSelectionInput(["abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "cbrt", "ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "log", "log1p", "log10", "log2", "max", "min", "pow", "round", "sign", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"]))
@@ -66,6 +67,7 @@ function CreateStaticNumberNode() {
     var node = CurrentContext.CreateNode("Static Numbers", "A node that contains various static numbers.")
 
     node.default = true
+    node.default_type = "static_numbers"
     node.SetAccent("ff6600")
 
     node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -106,6 +108,7 @@ function CreateRandomNumberNode() {
     var node = CurrentContext.CreateNode("Random Number", "A node that generates a random number between zero and one.")
 
     node.default = true
+    node.default_type = "random_number"
     node.SetAccent("4444ff")
 
     // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -138,6 +141,7 @@ function CreateValueViewerNode() {
 
     node.default = true
     node.SetAccent("4488ff")
+    node.default_type = "value_viewer"
     node.AddInput("Input", CreateAnyInput())
     node.AddOutput("Output", CreateNumberViewerOutput())
 
@@ -156,6 +160,7 @@ function CreateMathOperationsNode() {
     var node = CurrentContext.CreateNode("Math Operations", "A node that performs various math operations.")
 
     node.default = true
+    node.default_type = "math_operations"
     node.SetAccent("dd00ff")
 
     node.AddInput("Mode", CreateSelectionInput(["Power", "Multiply", "Divide", "Add", "Subtract"]))
@@ -295,6 +300,7 @@ function CreateComparisonNode() {
     var node = CurrentContext.CreateNode("Comparison", "A node that compares two inputs.")
 
     node.default = true
+    node.default_type = "comparison"
     node.SetAccent("ff2200")
 
     // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -343,6 +349,7 @@ function CreatePredicateNode() {
     var node = CurrentContext.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
     node.default = true
+    node.default_type = "predicate_switch"
     node.SetAccent("ff8888")
 
     // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -377,6 +384,7 @@ function CreateBoolInverterNode() {
     var node = CurrentContext.CreateNode("Bool Inverter", "A node that inverts its input.")
 
     node.default = true
+    node.default_type = "bool_inverter"
     node.SetAccent("ff6655")
 
     // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
@@ -409,6 +417,7 @@ function CreateObjectKeyNode() {
     var node = CurrentContext.CreateNode("Object Key", "A node that accesses a key from an object.")
 
     node.default = true
+    node.default_type = "object_key"
     node.SetAccent("44aaee")
 
     var in1 = node.AddInput("Input", CreateObjectInput())
@@ -442,6 +451,7 @@ function CreateObjectNode() {
     var node = CurrentContext.CreateNode("Object", "A node contains an object.")
 
     node.default = true
+    node.default_type = "object"
     node.SetAccent("4466ee")
     var obj = {}
 
@@ -471,4 +481,17 @@ function CreateObjectNode() {
     }
 
     return node
+}
+
+const node_types = {
+    "comparison": CreateComparisonNode,
+    "object": CreateObjectNode,
+    "object_key": CreateObjectKeyNode,
+    "bool_inverter": CreateBoolInverterNode,
+    "predicate_switch": CreatePredicateNode,
+    "comparison": CreateComparisonNode,
+    "math_operations": CreateMathOperationsNode,
+    "math_functions": CreateMathFunctionsNode,
+    "static_numbers": CreateStaticNumberNode,
+    "value_viewer": CreateValueViewerNode
 }

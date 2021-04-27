@@ -21,6 +21,8 @@
  *   SOFTWARE.
  */
 
+
+
 var nodes = []
 
 class NodeManager {
@@ -141,6 +143,27 @@ class NodeManager {
         })
 
         output.connections = []
+    }
+
+    toJSON() {
+        var json = {
+            bg_color: this.background_color
+        }
+        // convert this nodemanager to a JSON object
+        if (this.nodes.length > 0) json.nodes = []
+        this.nodes.forEach(node => {
+            json.nodes.push(node.toJSON())
+        })
+
+        return json
+    }
+
+    /**
+     * Convert a JSON object to a NodeManager
+     * @param {Object} object JSON object
+     */
+    static fromJSON(object) {
+
     }
 }
 
@@ -268,8 +291,43 @@ class Node {
         return this.inputs
     }
 
+    GetInput(id) {
+        var res = undefined
+        Object.keys(this.inputs).every(key => {
+            console.log(this.inputs[key].id, id)
+            if (this.inputs[key].id == id) {
+                res = { name: key, input: this.inputs[key] }
+                return false
+            }
+
+            return true
+        })
+
+        if (!res)
+            throw new Error(`${id} is not a valid input ID.`)
+
+        return res
+    }
+
     GetOutputs() {
         return this.outputs
+    }
+
+    GetOutput(id) {
+        var res = undefined
+        Object.keys(this.outputs).every(key => {
+            if (this.outputs[key].id == id) {
+                res = { name: key, output: this.outputs[key] }
+                return false
+            }
+
+            return true
+        })
+
+        if (!res)
+            throw new Error(`${id} is not a valid output ID.`)
+
+        return res
     }
 
     GetNonSelectionInputs() {
@@ -346,6 +404,107 @@ class Node {
         })
 
         return clone
+    }
+
+    /**
+     * Convert this Node to a JSON object.
+     */
+    toJSON() {
+        var json = {
+            id: this.id,
+            default: this.default,
+            internal: this.internal,
+            output_connections: [],
+            position: this.position || { x: 0, y: 0 },
+            scale: this.scale || { x: 0, y: 0 }
+        }
+
+        // add keys if NOT default
+        if (!this.default) {
+            json.name = this.name
+            json.description = this.description
+            json.accent = this.accent
+            json.inputs = {}
+            json.outputs = {}
+        } else {
+            json.default_type = this.default_type
+
+            // preserve selection choices
+
+            json.selections = {}
+
+            Object.keys(this.inputs).forEach(key => {
+                const input = this.inputs[key]
+                if (input.type != "Selection") return
+
+                json.selections[key] = input.selection
+            })
+        }
+
+        // preserve internal types
+        if (this.internal)
+            json.internal_type = this.internal_type
+
+        // if this node has internal nodes
+        if (this.InternalManager.nodes.length > 0) json.InternalManager = this.InternalManager.toJSON()
+
+        // preserve inputs/outputs and their IDs (for reconstruction later)
+        if (Object.keys(this.inputs).length > 0 && !this.default)
+            Object.keys(this.inputs).forEach(key => {
+                const input = this.inputs[key]
+                // initialize this input
+                json.inputs[key] = {
+                    id: input.id,
+                    type: input.type,
+                    name: key,
+                    direction: input.direction,
+                    position: input.position,
+                    default_value: input.default_value,
+                    value: input.value
+                }
+            })
+
+        // we really only need to know the output connections
+        if (Object.keys(this.outputs).length > 0) {
+            Object.keys(this.outputs).forEach(key => {
+                const output = this.outputs[key]
+                // initialize this output
+                if (!this.default)
+                    json.outputs[key] = {
+                        id: output.id,
+                        type: output.type,
+                        direction: output.direction,
+                        position: output.position,
+                        default_value: output.default_value,
+                        value: output.value,
+                        connections: []
+                    }
+
+                output.connections.forEach(con => {
+                    json.output_connections.push({
+                        origin: {
+                            node: output.parent.id,
+                            output: key
+                        },
+                        endpoint: {
+                            node: con.parent.id,
+                            input: con.parent.GetInput(con.id).name
+                        },
+                        direction: con.direction
+                    })
+                })
+            })
+        }
+
+        return json
+    }
+
+    /**
+     * Convert JSON to a Node
+     * @param {Object} object JSON object
+     */
+    static fromJSON(object) {
+
     }
 }
 
