@@ -94,7 +94,7 @@ function LoadNode(data, loadID, context, parent) {
     if (loadID)
         n.id = json.id
     n.scale = json.scale
-    n.accent = json.accent
+    n.accent = new Color(json.accent.r, json.accent.g, json.accent.b, json.accent.a)
     n.position = json.hasOwnProperty("position") ? json.position : {
         x: n.scale.x,
         y: n.scale.y
