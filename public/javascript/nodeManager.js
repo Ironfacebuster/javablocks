@@ -305,7 +305,7 @@ class Node {
     GetInput(id) {
         var res = undefined
         Object.keys(this.inputs).every(key => {
-            console.log(this.inputs[key].id, id)
+            // console.log(this.inputs[key].id, id)
             if (this.inputs[key].id == id) {
                 res = { name: key, input: this.inputs[key] }
                 return false
