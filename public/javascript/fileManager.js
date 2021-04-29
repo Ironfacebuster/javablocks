@@ -33,13 +33,16 @@ function SaveWorkspace() {
 
     var dat = {
         schema: "1.0",
-        data: main
+        type: "WRKSP",
+        data: ""
     }
 
-    const compressed = LZString.compressToBase64(JSON.stringify(dat))
+    const compressed = LZString.compressToBase64(JSON.stringify(main))
     console.log("Compressed to", compressed.length, "bytes.")
 
-    SaveFile("Unnamed Workspace.ws", compressed)
+    dat.data = compressed
+
+    SaveFile("Unnamed Workspace.ws", JSON.stringify(dat))
 }
 
 function SaveNode(node) {
@@ -47,32 +50,52 @@ function SaveNode(node) {
     var n = node.toJSON()
 
     // remove connections
-    delete(n.output_connections)
+    delete (n.output_connections)
     // delete position, but preserve scale
-    delete(n.position)
+    delete (n.position)
 
     var dat = {
         schema: "1.0",
-        data: node
+        type: "NODE",
+        data: ""
     }
 
-    const compressed = LZString.compressToBase64(JSON.stringify(dat))
+    const compressed = LZString.compressToBase64(JSON.stringify(node))
     console.log("Compressed to", compressed.length, "bytes.")
 
-    SaveFile(n.name + ".node", compressed)
+    dat.data = compressed
+
+    SaveFile(n.name + ".node", JSON.stringify(dat))
 }
 
 function LoadNodeFromFile(compressed) {
-    const decomp = LZString.decompressFromBase64(compressed)
-    if (!decomp) return alert("Error: malformed file!")
+    try {
+        compressed = JSON.parse(compressed)
+        if (!compressed.hasOwnProperty("schema") || !compressed.hasOwnProperty("data")) return alert("Error: this is not a valid node file!")
+        if (!compressed.hasOwnProperty("type") || compressed.type != "NODE") return alert("Error: this is not a valid node file!")
+
+        const decomp = LZString.decompressFromBase64(compressed.data)
+        if (!decomp) return alert("Error: malformed file!")
+
+        switch (compressed.schema) {
+            case "1.0":
+                return LoadNodeSchema1(decomp)
+            default:
+                alert("Error: this is not a supported schema!")
+                return {}
+        }
+    } catch (err) {
+        alert("Error loading node!")
+        console.log(err)
+    }
+}
+
+function LoadNodeSchema1(decomp) {
 
     const parsed = JSON.parse(decomp)
+    console.log(parsed)
 
-    if (!parsed.hasOwnProperty("schema") || !parsed.hasOwnProperty("data")) return alert("Error: this is not a valid Node file!")
-
-    const json = parsed.data
-
-    var node = LoadNode(json)
+    var node = LoadNode(parsed)
     node.position = {
         x: node.scale.x,
         y: node.scale.y
