@@ -37,6 +37,9 @@ function SaveWorkspace(node_manager, force) {
     node_manager = node_manager || Manager // either supplied node manager, or window node manager
     var dat = {
         schema: "1.0",
+        states: {
+            paused: pause_execution
+        },
         type: "WRKSP",
         data: ""
     }
@@ -74,8 +77,49 @@ function SaveWorkspace(node_manager, force) {
     } else
         // otherwise, save it to localstorage
         localStorage.setItem(ws_name, string_dat)
+}
 
+function LoadWorkspaceFromFile(compressed) {
+    try {
+        SetCursor("wait")
 
+        compressed = JSON.parse(compressed)
+        if (!compressed.hasOwnProperty("schema") || !compressed.hasOwnProperty("data")) return alert("Error: this is not a valid workspace!")
+        if (!compressed.hasOwnProperty("type") || compressed.type != "WRKSP") return alert("Error: this is not a valid workspace!")
+
+        const decomp = LZString.decompressFromBase64(compressed.data)
+
+        if (!decomp) return alert("Error: malformed file!")
+
+        switch (compressed.schema) {
+            case "1.0":
+                return LoadWorkspaceSchema1(decomp)
+            default:
+                alert("Error: this is not a supported schema!")
+                return {}
+        }
+    } catch (err) {
+        SetCursor("default")
+        alert("Error loading node!")
+        console.log(err)
+    }
+}
+
+function LoadWorkspaceSchema1(ws) {
+    ws = JSON.parse(ws)
+    // set window manager
+    window.Manager = NodeManager.fromJSON(ws.manager)
+
+    CurrentContext = Manager
+    context_path[0] = Manager
+
+    UpdateAndDrawNodes()
+
+    // load last selected nodes
+    // maybe store just the IDs?
+    // Mouse.selected = ws.mouse.selected
+
+    SetCursor("default")
 }
 
 function SaveNode(node) {
@@ -83,9 +127,9 @@ function SaveNode(node) {
     var n = node.toJSON()
 
     // remove connections
-    delete (n.output_connections)
+    delete(n.output_connections)
     // delete position, but preserve scale
-    delete (n.position)
+    delete(n.position)
 
     var dat = {
         schema: "1.0",
@@ -108,6 +152,7 @@ function LoadNodeFromFile(compressed) {
         if (!compressed.hasOwnProperty("type") || compressed.type != "NODE") return alert("Error: this is not a valid node file!")
 
         const decomp = LZString.decompressFromBase64(compressed.data)
+        console.log(decomp)
         if (!decomp) return alert("Error: malformed file!")
 
         switch (compressed.schema) {
@@ -128,7 +173,8 @@ function LoadNodeSchema1(decomp) {
     const parsed = JSON.parse(decomp)
     console.log(parsed)
 
-    var node = LoadNode(parsed)
+    var node = Node.fromJSON(parsed, CurrentContext)
+
     node.position = {
         x: node.scale.x,
         y: node.scale.y
@@ -137,116 +183,6 @@ function LoadNodeSchema1(decomp) {
     UpdateAndDrawNodes()
 
     return node
-}
-
-function LoadNode(data, loadID, context, parent) {
-    context = context || CurrentContext
-    parent = parent || null
-    loadID = loadID || false
-
-    const json = data
-
-    var n = context.CreateNode(json.name, json.description)
-    if (loadID)
-        n.id = json.id
-    n.scale = json.scale
-    n.accent = new Color(json.accent.r, json.accent.g, json.accent.b, json.accent.a)
-    n.position = json.hasOwnProperty("position") ? json.position : {
-        x: n.scale.x,
-        y: n.scale.y
-    }
-
-    n.context = context
-
-    if (json.internal && parent) {
-        n.internal_type = json.internal_type
-        n.internal = true
-        n.parent = parent
-    }
-
-    const prev_context = CurrentContext
-
-    // assign inputs and outputs
-    Object.keys(json.inputs).forEach(key => {
-        var input = n.AddInput(key, CreateAnyInput())
-        input.position = json.inputs[key].position || undefined
-        input.id = json.inputs[key].id
-    })
-    Object.keys(json.outputs).forEach(key => {
-        var output = n.AddOutput(key, CreateAnyOutput())
-        output.position = json.outputs[key].position || undefined
-        output.id = json.outputs[key].id
-    })
-
-    if (json.hasOwnProperty("InternalManager")) {
-        // load internal manager stuff
-        const c = json.InternalManager.bg_color
-        n.InternalManager.background_color = new Color(c.r, c.g, c.b, c.a)
-
-        CurrentContext = n.InternalManager
-
-        var loaded_internal = 0
-
-        // retain IDs for internal connections
-        const nodes = json.InternalManager.nodes
-
-        var internal_connections = []
-
-        if (nodes.length > 0)
-            nodes.forEach(node => {
-                if (node.default) {
-
-                    if (!node_types.hasOwnProperty(node.default_type)) return console.log("UKNOWN TYPE", node.default_type)
-
-                    var default_node = node_types[node.default_type]()
-
-                    default_node.position = node.position
-                    default_node.scale = node.scale
-                    default_node.id = node.id
-
-                    if (node.hasOwnProperty("selections"))
-                        Object.keys(node.selections).forEach(key => {
-                            console.log(node.selections[key])
-                            default_node.inputs[key].SetSelection(node.selections[key])
-                        })
-                } else {
-                    var loaded = LoadNode(node, true, n.InternalManager, n)
-
-                    // update this to use the built in CreateInternalInput/Output nodes
-                    if (node.internal) {
-                        if (node.internal_type == "INPUT") n.internal_inputs = loaded
-                        if (node.internal_type == "OUTPUT") n.internal_outputs = loaded
-                        loaded_internal++
-                    }
-                }
-
-                if (node.hasOwnProperty("output_connections")) internal_connections = internal_connections.concat(node.output_connections)
-            })
-
-        internal_connections.forEach(connection => {
-            var origin = CurrentContext.GetNode(connection.origin.node),
-                endpoint = CurrentContext.GetNode(connection.endpoint.node)
-
-            var con1 = origin.outputs[connection.origin.output],
-                con2 = endpoint.inputs[connection.endpoint.input]
-
-            con1.connections.push(con2)
-            con2.connections.push(con1)
-
-            UpdateNodePositions(origin)
-            UpdateNodePositions(endpoint)
-        })
-
-        if (loaded_internal == 2) {
-            n.InternalManager.internal_nodes_created = true
-        }
-
-        UpdateNodePositions(n)
-
-        CurrentContext = prev_context
-    }
-
-    return n
 }
 
 function SaveFile(filename, data) {

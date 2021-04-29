@@ -30,7 +30,10 @@ class NodeManager {
     nodes = []
 
     view = {
-        position: { x: 0, y: 0 },
+        position: {
+            x: 0,
+            y: 0
+        },
         scale: 0
     }
 
@@ -174,7 +177,37 @@ class NodeManager {
      * @param {Object} object JSON object
      */
     static fromJSON(object) {
+        var n_manager = new NodeManager()
+        n_manager.background_color = new Color(object.bg_color.r, object.bg_color.g, object.bg_color.b)
 
+        CurrentContext = n_manager
+
+        var connections = []
+
+        object.nodes.forEach(node => {
+            var n = Node.fromJSON(node, n_manager)
+
+            if (node.hasOwnProperty("output_connections"))
+                connections = connections.concat(node.output_connections)
+        })
+
+        connections.forEach(connection => {
+            var origin = CurrentContext.GetNode(connection.origin.node),
+                endpoint = CurrentContext.GetNode(connection.endpoint.node)
+
+            var con1 = origin.outputs[connection.origin.output],
+                con2 = endpoint.inputs[connection.endpoint.input]
+
+            con1.connections.push(con2)
+            con2.connections.push(con1)
+
+            UpdateNodePositions(origin)
+            UpdateNodePositions(endpoint)
+        })
+
+        n_manager.VariableManager = new VariableManager(object.variables.variables, object.variables.constants)
+
+        return n_manager
     }
 }
 
@@ -307,7 +340,10 @@ class Node {
         Object.keys(this.inputs).every(key => {
             // console.log(this.inputs[key].id, id)
             if (this.inputs[key].id == id) {
-                res = { name: key, input: this.inputs[key] }
+                res = {
+                    name: key,
+                    input: this.inputs[key]
+                }
                 return false
             }
 
@@ -328,7 +364,10 @@ class Node {
         var res = undefined
         Object.keys(this.outputs).every(key => {
             if (this.outputs[key].id == id) {
-                res = { name: key, output: this.outputs[key] }
+                res = {
+                    name: key,
+                    output: this.outputs[key]
+                }
                 return false
             }
 
@@ -426,8 +465,14 @@ class Node {
             default: this.default,
             internal: this.internal,
             output_connections: [],
-            position: this.position || { x: 0, y: 0 },
-            scale: this.scale || { x: 0, y: 0 }
+            position: this.position || {
+                x: 0,
+                y: 0
+            },
+            scale: this.scale || {
+                x: 0,
+                y: 0
+            }
         }
 
         // add keys if NOT default
@@ -514,8 +559,117 @@ class Node {
      * Convert JSON to a Node
      * @param {Object} object JSON object
      */
-    static fromJSON(object) {
+    static fromJSON(object, context, parent) {
+        parent = parent || null
 
+        var loadID = false
+        if (object.hasOwnProperty("id")) loadID = true
+
+        if (object.default) {
+            if (!node_types.hasOwnProperty(object.default_type)) return console.log("UKNOWN TYPE", object.default_type)
+
+            var default_node = node_types[object.default_type]()
+
+            default_node.position = object.position
+            default_node.scale = object.scale
+            default_node.id = object.id
+
+            if (object.hasOwnProperty("selections"))
+                Object.keys(object.selections).forEach(key => {
+                    default_node.inputs[key].SetSelection(object.selections[key])
+                })
+
+            return default_node
+        }
+
+        const json = object
+
+        var n = context.CreateNode(json.name, json.description)
+        if (loadID)
+            n.id = json.id
+        if (n.hasOwnProperty("accent"))
+            n.accent = new Color(json.accent.r, json.accent.g, json.accent.b, json.accent.a)
+        n.scale = json.scale
+        n.position = json.hasOwnProperty("position") ? json.position : {
+            x: n.scale.x,
+            y: n.scale.y
+        }
+
+        n.context = context
+
+        if ((json.internal || json.hasOwnProperty("internal_type")) && parent) {
+            n.internal_type = json.internal_type
+            n.internal = true
+            n.parent = parent
+        }
+
+        // assign inputs and outputs
+        Object.keys(json.inputs).forEach(key => {
+            var input = n.AddInput(key, CreateAnyInput())
+            input.position = json.inputs[key].position || undefined
+            input.id = json.inputs[key].id
+        })
+        Object.keys(json.outputs).forEach(key => {
+            var output = n.AddOutput(key, CreateAnyOutput())
+            output.position = json.outputs[key].position || undefined
+            output.id = json.outputs[key].id
+        })
+
+        if (json.hasOwnProperty("InternalManager")) {
+            // load internal manager stuff
+            const c = json.InternalManager.bg_color
+            n.InternalManager.background_color = new Color(c.r, c.g, c.b, c.a)
+
+            var loaded_internal = 0
+
+            // retain IDs for internal connections
+            const nodes = json.InternalManager.nodes
+
+            var internal_connections = []
+
+            const prev_context = CurrentContext
+            CurrentContext = n.InternalManager
+
+            if (nodes.length > 0)
+                nodes.forEach(node => {
+
+
+                    var loaded = Node.fromJSON(node, n.InternalManager, n)
+
+                    // update this to use the built in CreateInternalInput/Output nodes
+                    if (node.internal) {
+                        if (node.internal_type == "INPUT") n.internal_inputs = loaded
+                        if (node.internal_type == "OUTPUT") n.internal_outputs = loaded
+                        loaded_internal++
+                    }
+
+                    if (node.hasOwnProperty("output_connections")) internal_connections = internal_connections.concat(node.output_connections)
+                })
+
+            internal_connections.forEach(connection => {
+                var origin = CurrentContext.GetNode(connection.origin.node),
+                    endpoint = CurrentContext.GetNode(connection.endpoint.node)
+
+                var con1 = origin.outputs[connection.origin.output],
+                    con2 = endpoint.inputs[connection.endpoint.input]
+
+                con1.connections.push(con2)
+                con2.connections.push(con1)
+
+                UpdateNodePositions(origin)
+                UpdateNodePositions(endpoint)
+            })
+
+            if (loaded_internal == 2) {
+                n.InternalManager.internal_nodes_created = true
+            }
+
+            UpdateNodePositions(n)
+
+            CurrentContext = prev_context
+        }
+
+        return n
     }
 }
 
