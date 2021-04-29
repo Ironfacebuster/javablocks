@@ -28,21 +28,36 @@
  * Save the MAIN node manager to a file
  * @param {NodeManager} node_manager 
  */
-function SaveWorkspace() {
-    var main = Manager.toJSON()
-
+function SaveWorkspace(node_manager) {
+    node_manager = node_manager || Manager // either supplied node manager, or window node manager
     var dat = {
         schema: "1.0",
         type: "WRKSP",
         data: ""
     }
 
-    const compressed = LZString.compressToBase64(JSON.stringify(main))
+    const compress = {
+        manager: node_manager.toJSON(),
+        mouse: {
+            selected: []
+        },
+    }
+
+    // eventually save other things, such as:
+    // maybe selected nodes?
+
+    // the following have been moved into the NodeManager
+    // constants and variables
+    // view position
+    // view scale
+
+    const compressed = LZString.compressToBase64(JSON.stringify(compress))
     console.log("Compressed to", compressed.length, "bytes.")
 
     dat.data = compressed
 
-    SaveFile("Unnamed Workspace.ws", JSON.stringify(dat))
+    const ws_name = "Unnamed Workspace" // get this properly when functionality is added
+    SaveFile(`${ws_name}.ws`, JSON.stringify(dat))
 }
 
 function SaveNode(node) {

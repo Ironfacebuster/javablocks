@@ -28,7 +28,16 @@ var nodes = []
 class NodeManager {
     background_color = new Color(58, 65, 82)
     nodes = []
+
+    view = {
+        position: { x: 0, y: 0 },
+        scale: 0
+    }
+
+    VariableManager
+
     constructor() {
+        this.VariableManager = new VariableManager()
         this.nodes = []
     }
 
