@@ -493,5 +493,6 @@ const node_types = {
     "math_operations": CreateMathOperationsNode,
     "math_functions": CreateMathFunctionsNode,
     "static_numbers": CreateStaticNumberNode,
-    "value_viewer": CreateValueViewerNode
+    "value_viewer": CreateValueViewerNode,
+    "random_number": CreateRandomNumberNode
 }
