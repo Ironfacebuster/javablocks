@@ -24,11 +24,16 @@
 // file manager!
 // for now, all this will handle is saving and loading files
 
+// various optimizations could be made
+// in all of the toJSON functions, each object/array must be checked
+//      if it's empty, delete the key, for file size reductions.
+
 /**
  * Save the MAIN node manager to a file
  * @param {NodeManager} node_manager 
  */
-function SaveWorkspace(node_manager) {
+function SaveWorkspace(node_manager, force) {
+    force = force || false
     node_manager = node_manager || Manager // either supplied node manager, or window node manager
     var dat = {
         schema: "1.0",
@@ -55,9 +60,22 @@ function SaveWorkspace(node_manager) {
     console.log("Compressed to", compressed.length, "bytes.")
 
     dat.data = compressed
+    const string_dat = JSON.stringify(dat)
 
     const ws_name = "Unnamed Workspace" // get this properly when functionality is added
-    SaveFile(`${ws_name}.ws`, JSON.stringify(dat))
+
+    const data_size = new Blob([string_dat]).size / 1000000
+    console.log("File size: " + data_size + " MB", "(" + (data_size / 5) * 100 + "%)")
+    // If the workspace's data is greater than 5 megabytes
+    if (data_size > 5 || force == true) {
+        // save as external file
+        if (confirm("Unfortunately, this Workspace must be saved as a file. Is this ok?"))
+            SaveFile(`${ws_name}.ws`, string_dat)
+    } else
+        // otherwise, save it to localstorage
+        localStorage.setItem(ws_name, string_dat)
+
+
 }
 
 function SaveNode(node) {
