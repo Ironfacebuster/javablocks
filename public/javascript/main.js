@@ -153,8 +153,8 @@ function DrawNode(node) {
     }
 
     if (Array.isArray(Mouse.selected) && Mouse.selected.findIndex((n) => {
-            return n.id == node.id
-        }) >= 0) {
+        return n.id == node.id
+    }) >= 0) {
         // outline this node
         ctx.fillStyle = "rgba(0,255,128,0.1)"
         ctx.strokeStyle = "rgba(0,255,64,0.75)"
@@ -336,28 +336,28 @@ function GetColorByType(type) {
         case "Number":
             return {
                 fill: Color.white,
-                    stroke: Color.FromHex("#0077bb")
+                stroke: Color.FromHex("#0077bb")
             }
-            case "Boolean":
-                return {
-                    fill: Color.white,
-                        stroke: Color.FromHex("#ff6600")
-                }
-                case "Array":
-                    return {
-                        fill: Color.white,
-                            stroke: Color.FromHex("#eeee44")
-                    }
-                    case "Object":
-                        return {
-                            fill: Color.white,
-                                stroke: Color.FromHex("#4444ee")
-                        }
-                        default:
-                            return {
-                                fill: Color.white,
-                                    stroke: Color.FromHex("#808080")
-                            }
+        case "Boolean":
+            return {
+                fill: Color.white,
+                stroke: Color.FromHex("#ff6600")
+            }
+        case "Array":
+            return {
+                fill: Color.white,
+                stroke: Color.FromHex("#eeee44")
+            }
+        case "Object":
+            return {
+                fill: Color.white,
+                stroke: Color.FromHex("#4444ee")
+            }
+        default:
+            return {
+                fill: Color.white,
+                stroke: Color.FromHex("#808080")
+            }
     }
 }
 
@@ -472,8 +472,8 @@ canvas.addEventListener('mousemove', (e) => {
         if (Mouse.target.type == "Node") {
             // if we selected objects with the selection box, and are dragging a selected node
             if (Array.isArray(Mouse.selected) && Mouse.selected.length > 0 && Mouse.selected.findIndex((node) => {
-                    return node.id == Mouse.target.id
-                }) != -1) {
+                return node.id == Mouse.target.id
+            }) != -1) {
                 Mouse.target.BringToFront()
                 SetCursor("grabbing")
 
@@ -660,7 +660,7 @@ function ClearMouseSelection(clean) {
     clean = clean || false
     if (Mouse.selected)
         Mouse.selected.forEach(n => {
-            delete(n.dragOffset)
+            delete (n.dragOffset)
         })
 
     if (clean)
@@ -1303,16 +1303,16 @@ canvas.addEventListener('mouseup', (e) => {
                                         case "INPUT":
                                             CurrentContext.RemoveInputConnections(n_node[dir][name])
                                             parentNode.context.RemoveOutputConnections(parentNode.outputs[name])
-                                            delete(parentNode.outputs[name])
+                                            delete (parentNode.outputs[name])
                                             break
                                         case "OUTPUT":
                                             CurrentContext.RemoveOutputConnections(n_node[dir][name])
                                             parentNode.context.RemoveInputConnections(parentNode.inputs[name])
-                                            delete(parentNode.inputs[name])
+                                            delete (parentNode.inputs[name])
                                             break
                                     }
 
-                                    delete(n_node[dir][name])
+                                    delete (n_node[dir][name])
                                 } else {
                                     var n_node = CurrentContext.GetNode(node_id)
                                     const dir = target.direction.toLowerCase() + "s"
@@ -1331,7 +1331,7 @@ canvas.addEventListener('mouseup', (e) => {
                                                 n_node.InternalManager.RemoveOutputConnections(n_node.internal_inputs["outputs"][name])
                                                 // delete output
                                                 const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
-                                                delete(internal.outputs[name])
+                                                delete (internal.outputs[name])
                                             }
                                             break
                                         case "OUTPUT":
@@ -1340,12 +1340,12 @@ canvas.addEventListener('mouseup', (e) => {
                                                 n_node.InternalManager.RemoveInputConnections(n_node.internal_outputs["inputs"][name])
 
                                                 const internal = n_node.InternalManager.GetNode(n_node.internal_inputs.id)
-                                                delete(internal.inputs[name])
+                                                delete (internal.inputs[name])
                                             }
                                             break
                                     }
 
-                                    delete(n_node[dir][name])
+                                    delete (n_node[dir][name])
                                 }
 
                                 // TODO: fix floating wire issue when deleting an i/o above a connected i/o
@@ -1544,16 +1544,16 @@ function DrawSelectionDropdown(data, position) {
 
         if (h >= 16 && h <= height + 2)
             ctx.fillText(view.name, position.x + 14, position.y + h),
-            MenuOverlay.collision.push({
-                x: position.x + 10,
-                y: position.y + h - 12,
-                width: parent.scale.x * 0.75,
-                height: 15,
-                function: () => {
-                    console.log(i)
-                    selection.SetSelection(i)
-                }
-            })
+                MenuOverlay.collision.push({
+                    x: position.x + 10,
+                    y: position.y + h - 12,
+                    width: parent.scale.x * 0.75,
+                    height: 15,
+                    function: () => {
+                        console.log(i)
+                        selection.SetSelection(i)
+                    }
+                })
         return true
     })
 
@@ -1705,13 +1705,22 @@ window.addEventListener("keydown", (e) => {
     if (event.isComposing || event.keyCode === 229)
         return
 
-    // keydown to make hotkeys feel more responsive
-    if (e.ctrlKey && e.keyCode == 65) {
-        // CTRL+A = select all
-        Mouse.selected = CurrentContext.GetNodes()
-        console.log("SELECTED", Mouse.selected)
-
-        UpdateAndDrawNodes()
+    if (e.ctrlKey) {
+        switch (e.keyCode) {
+            // CTRL+A = select all
+            case 65:
+                Mouse.selected = CurrentContext.GetNode()
+                Mouse.selected = CurrentContext.GetNodes()
+                console.log("SELECTED", Mouse.selected)
+                UpdateAndDrawNodes()
+                break
+            // CTRL+S = save workspace
+            case 83:
+                SetCursor("wait")
+                SaveWorkspace(Manager)
+                SetCursor("default")
+                break
+        }
 
         e.preventDefault()
         return false
