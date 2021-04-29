@@ -156,7 +156,9 @@ class NodeManager {
 
     toJSON() {
         var json = {
-            bg_color: this.background_color
+            bg_color: this.background_color,
+            view: this.view,
+            variables: this.VariableManager
         }
         // convert this nodemanager to a JSON object
         if (this.nodes.length > 0) json.nodes = []
