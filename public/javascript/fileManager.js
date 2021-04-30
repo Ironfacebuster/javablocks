@@ -180,6 +180,8 @@ function LoadNodeSchema1(decomp) {
         y: node.scale.y
     }
 
+    node.id = GenerateID(16)
+
     UpdateAndDrawNodes()
 
     return node
