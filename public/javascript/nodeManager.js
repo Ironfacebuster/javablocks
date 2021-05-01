@@ -190,12 +190,13 @@ class NodeManager {
 
         var connections = []
 
-        object.nodes.forEach(node => {
-            var n = Node.fromJSON(node, n_manager)
+        if (object.hasOwnProperty("nodes"))
+            object.nodes.forEach(node => {
+                var n = Node.fromJSON(node, n_manager)
 
-            if (node.hasOwnProperty("output_connections"))
-                connections = connections.concat(node.output_connections)
-        })
+                if (node.hasOwnProperty("output_connections"))
+                    connections = connections.concat(node.output_connections)
+            })
 
         connections.forEach(connection => {
             var origin = CurrentContext.GetNode(connection.origin.node),
