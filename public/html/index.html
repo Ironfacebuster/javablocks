@@ -125,11 +125,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     </div>
 
     <div>
-        <div>Files</div>
-        <label for="node">Load Node from file</label>
-        <input id="node-selector" name="node" type="file" accept=".node" />
-    </div>
+        <div>File</div>
+        <div>
+            <button onclick="NewWorkspace()">New</button>
+            <button onclick="Save()">Save</button>
+            <button onclick="SaveAs()">Save As</button>
+        </div>
+        <!-- <label for="node">Load Node from file</label> -->
+        <!-- <input id="node-selector" name="node" type="file" accept=".node" /> -->
 
+        <div>Saved Workspaces</div>
+        <div id="ws_buttons">
+
+        </div>
+    </div>
 
     <span id="main_container" style="height: fit-content; vertical-align: center;">
         <overlay id="overlay_text">
@@ -148,6 +157,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             creation: true,
             deletion: true
         }
+    }
+
+    workspace = {
+        name: "Unnamed Workspace"
     }
 </script>
 

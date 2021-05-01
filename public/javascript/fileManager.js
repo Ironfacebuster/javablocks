@@ -45,6 +45,7 @@ function SaveWorkspace(node_manager, force) {
     }
 
     const compress = {
+        name: workspace.name,
         manager: node_manager.toJSON(),
         mouse: {
             selected: []
@@ -65,7 +66,7 @@ function SaveWorkspace(node_manager, force) {
     dat.data = compressed
     const string_dat = JSON.stringify(dat)
 
-    const ws_name = "Unnamed Workspace" // get this properly when functionality is added
+    const ws_name = workspace.name
 
     const data_size = new Blob([string_dat]).size / 1000000
     console.log("File size: " + data_size + " MB", "(" + (data_size / 5) * 100 + "%)")
@@ -110,6 +111,7 @@ function LoadWorkspaceSchema1(ws) {
     // set window manager
     window.Manager = NodeManager.fromJSON(ws.manager)
 
+    workspace.name = ws.name
     CurrentContext = Manager
     context_path[0] = Manager
 
@@ -127,9 +129,9 @@ function SaveNode(node) {
     var n = node.toJSON()
 
     // remove connections
-    delete (n.output_connections)
+    delete(n.output_connections)
     // delete position, but preserve scale
-    delete (n.position)
+    delete(n.position)
 
     var dat = {
         schema: "1.0",
@@ -199,19 +201,95 @@ function SaveFile(filename, data) {
     a.remove()
 }
 
-const nodeSelector = document.getElementById('node-selector')
-nodeSelector.addEventListener('change', (event) => {
-    const fileList = event.target.files
-    const file = fileList[0]
+function GetSavedWorkspaces() {
+    var workspaces = []
 
-    const reader = new FileReader()
+    // get all localStorage items and check
+    // if they're workspaces
+    Object.keys(localStorage).forEach(k => {
+        const str = localStorage.getItem(k)
 
-    reader.onload = function () {
-        // console.log(reader.result)
-        LoadNodeFromFile(reader.result)
+        if (!isJSON(str)) return
 
-        nodeSelector.value = null
+        const j = JSON.parse(str)
+
+        if (j.type == "WRKSP") workspaces.push(k)
+    })
+
+    const ws_buttons = document.getElementById("ws_buttons")
+
+    workspaces.sort()
+
+    while (ws_buttons.firstChild) {
+        ws_buttons.removeChild(ws_buttons.firstChild);
     }
 
-    reader.readAsText(file)
-})
+    workspaces.forEach(ws => {
+        const button = document.createElement("button")
+        button.innerText = ws
+        button.onclick = () => {
+            if (confirm("Would you like to load " + ws + "?"))
+                LoadWorkspaceFromFile(localStorage.getItem(ws))
+        }
+        ws_buttons.appendChild(button)
+    })
+}
+
+
+function isJSON(str) {
+    try {
+        JSON.parse(str)
+    } catch (e) {
+        return false
+    }
+    return true
+}
+
+function NewWorkspace() {
+    const filename = prompt("Please enter the name of the new Workspace.", "Unnamed Workspace")
+    if (filename && filename.length > 0) {
+        workspace.name = filename
+
+        window.Manager = new NodeManager()
+        CurrentContext = Manager
+        context_path[0] = Manager
+
+        UpdateAndDrawNodes()
+        // SaveWorkspace()
+        // GetSavedWorkspaces()
+    }
+}
+
+function Save() {
+    SaveWorkspace()
+    GetSavedWorkspaces()
+}
+
+function SaveAs() {
+    const filename = prompt("Please enter the name of this Workspace.", "Unnamed Workspace")
+    if (filename && filename.length > 0) {
+        workspace.name = filename
+
+        SaveWorkspace()
+        GetSavedWorkspaces()
+    }
+}
+
+GetSavedWorkspaces()
+
+// const nodeSelector = document.getElementById('node-selector')
+// nodeSelector.addEventListener('change', (event) => {
+//     const fileList = event.target.files
+//     const file = fileList[0]
+
+//     const reader = new FileReader()
+
+//     reader.onload = function () {
+//         // console.log(reader.result)
+//         LoadNodeFromFile(reader.result)
+
+//         nodeSelector.value = null
+//     }
+
+//     reader.readAsText(file)
+// })
