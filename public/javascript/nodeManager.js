@@ -51,7 +51,8 @@ class NodeManager {
         // NodeManager keeps track of this node.
         this.nodes.push(node)
 
-        console.log(`Created node (id ${node.id})`)
+        if (log.node.creation)
+            console.log(`Created node (id ${node.id})`)
 
         return node
     }
@@ -78,7 +79,10 @@ class NodeManager {
             return n.id == id
         })
 
-        if (index == -1) return console.log(`Attempted to delete non-existant node (id ${id})`)
+        if (index == -1) {
+            if (log.node.deletion) console.log(`Attempted to delete non-existant node (id ${id})`)
+            return
+        }
 
         var node = this.GetNode(id)
         if (node.internal) return
@@ -95,7 +99,7 @@ class NodeManager {
         else if (index == nodes.length - 1) nodes.pop()
         else nodes.splice(index, 1)
 
-        console.log(`Deleted node (id ${id})`)
+        if (log.node.deletion) console.log(`Deleted node (id ${id})`)
     }
 
     BatchDelete(array) {
@@ -177,6 +181,8 @@ class NodeManager {
      * @param {Object} object JSON object
      */
     static fromJSON(object) {
+        log.node.creation = false
+
         var n_manager = new NodeManager()
         n_manager.background_color = new Color(object.bg_color.r, object.bg_color.g, object.bg_color.b)
 
@@ -206,6 +212,8 @@ class NodeManager {
         })
 
         n_manager.VariableManager = new VariableManager(object.variables.variables, object.variables.constants)
+
+        log.node.creation = true
 
         return n_manager
     }
