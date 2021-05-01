@@ -127,9 +127,9 @@ function SaveNode(node) {
     var n = node.toJSON()
 
     // remove connections
-    delete(n.output_connections)
+    delete (n.output_connections)
     // delete position, but preserve scale
-    delete(n.position)
+    delete (n.position)
 
     var dat = {
         schema: "1.0",
@@ -152,7 +152,7 @@ function LoadNodeFromFile(compressed) {
         if (!compressed.hasOwnProperty("type") || compressed.type != "NODE") return alert("Error: this is not a valid node file!")
 
         const decomp = LZString.decompressFromBase64(compressed.data)
-        console.log(decomp)
+        // console.log(decomp)
         if (!decomp) return alert("Error: malformed file!")
 
         switch (compressed.schema) {
