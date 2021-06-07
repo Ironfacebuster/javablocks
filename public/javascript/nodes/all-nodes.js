@@ -297,7 +297,7 @@ function CreateInternalOutputsNode(outputs, context) {
 }
 
 function CreateComparisonNode() {
-    var node = CurrentContext.CreateNode("Comparison", "A node that compares two inputs.")
+    var node = CurrentContext.CreateNode("Number Comparison", "A node that compares two inputs.")
 
     node.default = true
     node.default_type = "comparison"
@@ -345,6 +345,70 @@ function CreateComparisonNode() {
     return node
 }
 
+
+function CreateBoolLogicNode() {
+    var node = CurrentContext.CreateNode("Boolean Logic", "A node that compares two inputs.")
+
+    node.default = true
+    node.default_type = "bool_logic"
+    node.SetAccent("ff4400")
+
+    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    var mode = node.AddInput("Mode", CreateSelectionInput(["AND", "OR", "XOR", "NAND", "NOR", "XNOR"]))
+    var in1 = node.AddInput("A", CreateBoolInput())
+    var in2 = node.AddInput("B", CreateBoolInput())
+    var o = node.AddOutput("Output", CreateBoolOutput())
+
+    node.execute = (finished) => {
+        finished = finished || []
+        if (finished.indexOf(node.id) != -1) return
+        finished.push(node.id)
+
+        const act = node.inputs["Mode"].currentView.name
+        o.value = false
+
+        switch (act) {
+            case "AND":
+                // if both are true
+                o.value = (in1.value && in2.value)
+                break
+            case "OR":
+                // if either is true
+                o.value = (in1.value || in2.value)
+                break
+            case "XOR":
+                // if one of them is true, and they don't equal each other
+                o.value = ((in1.value || in2.value) && in1.value != in2.value)
+                break
+            case "NAND":
+                // inverted AND
+                o.value = !(in1.value && in2.value)
+                break
+            case "NOR":
+                // inverted OR
+                o.value = !(in1.value || in2.value)
+                break
+            case "XNOR":
+                // if the two values are the same
+                o.value = in1.value == in2.value
+                break
+        }
+
+        for (var k in node.outputs) {
+            var output = node.outputs[k]
+            if (output.connections.length > 0)
+                output.connections.forEach(con => {
+                    // console.log(con)
+                    con.value = output.value
+                    if (finished.indexOf(con.parent.id) == -1)
+                        Schedule.Schedule(con.parent, finished)
+                })
+        }
+    }
+
+    return node
+}
+
 function CreatePredicateNode() {
     var node = CurrentContext.CreateNode("Predicate Switch", "A node that switches between two inputs based on a bool predicate.")
 
@@ -352,10 +416,12 @@ function CreatePredicateNode() {
     node.default_type = "predicate_switch"
     node.SetAccent("ff8888")
 
-    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
+    // TODO: ensure both input types match
     var in2 = node.AddInput("A", CreateAnyInput())
     var in3 = node.AddInput("B", CreateAnyInput())
     var in1 = node.AddInput("Predicate", CreateBoolInput())
+
+    // TODO: change output type based on input type
     var o = node.AddOutput("Output", CreateAnyOutput())
 
     node.execute = (finished) => {
@@ -387,7 +453,6 @@ function CreateBoolInverterNode() {
     node.default_type = "bool_inverter"
     node.SetAccent("ff6655")
 
-    // node.AddInput("Value", CreateSelectionInput(["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"]))
     var in1 = node.AddInput("Input", CreateBoolInput())
     var o = node.AddOutput("Output", CreateBoolOutput())
 
@@ -448,7 +513,7 @@ function CreateObjectKeyNode() {
 }
 
 function CreateObjectNode() {
-    var node = CurrentContext.CreateNode("Object", "A node contains an object.")
+    var node = CurrentContext.CreateNode("Object", "A node that contains an object.")
 
     node.default = true
     node.default_type = "object"
@@ -489,7 +554,7 @@ const node_types = {
     "object_key": CreateObjectKeyNode,
     "bool_inverter": CreateBoolInverterNode,
     "predicate_switch": CreatePredicateNode,
-    "comparison": CreateComparisonNode,
+    "bool_logic": CreateBoolLogicNode,
     "math_operations": CreateMathOperationsNode,
     "math_functions": CreateMathFunctionsNode,
     "static_numbers": CreateStaticNumberNode,
